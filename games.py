@@ -1,57 +1,68 @@
-# coding: utf-8
 from pyspark.sql import SparkSession
 from pyspark.sql.functions import (
     col, trim, upper, when, to_timestamp, to_date,
-    year, month, current_timestamp, input_file_name, row_number, lit
+    year, month, current_timestamp, input_file_name, row_number
 )
 from pyspark.sql.types import LongType, IntegerType, StringType
 from pyspark.sql.window import Window
-spark = (
-    SparkSession.builder
-        .appName("list_hive_dbs")
-        .enableHiveSupport()   # make sure this is here
-        .getOrCreate()
-)
 
-spark.sql("USE nba_bronze")
-df = spark.table("games")
-df = spark.sql("SELECT * FROM games")
+spark = SparkSession.builder.appName("bronze_to_silver_games").getOrCreate()
+
 # ------------------------------------------------------------------
 # HDFS Paths
 # ------------------------------------------------------------------
+bronze_path = "hdfs:///tmp/DE011025/NBA/bronze/games"
+silver_path = "hdfs:///tmp/DE011025/NBA/silver/games"
+quarantine_path = "hdfs:///tmp/DE011025/NBA/quarantine/games"
 
 # ------------------------------------------------------------------
 # 1. Read Bronze CSV (raw)
 # ------------------------------------------------------------------
+df_bronze_raw = spark.read.csv(
+    bronze_path,
+    sep=",",
+    header=False,
+    inferSchema=True,
+    nullValue="null"
+)
+
+columns = [
+    "gameid","gamedatetimeest","hometeamcity","hometeamname","hometeamid",
+    "awayteamcity","awayteamname","awayteamid","homescore","awayscore",
+    "winner","gametype","attendance","arenaid","gamelabel","gamesublabel",
+    "seriesgamenumber","season"
+]
+
+df_bronze = df_bronze_raw.toDF(*columns)
 
 # ------------------------------------------------------------------
 # 2. Normalize fake nulls
 # ------------------------------------------------------------------
-df_clean = df.replace(["nul", "NULL", "NA", ""], None)
+df_clean = df_bronze.replace(["nul", "NULL", "NA", ""], None)
 
 # ------------------------------------------------------------------
 # 3. Cast to proper data types
 # ------------------------------------------------------------------
-# df_typed = df_clean.select(
-#     col("gameid").cast(LongType()),
-#     col("gamedatetimeest").cast(StringType()),
-#     col("hometeamcity").cast(StringType()),
-#     col("hometeamname").cast(StringType()),
-#     col("hometeamid").cast(LongType()),
-#     col("awayteamcity").cast(StringType()),
-#     col("awayteamname").cast(StringType()),
-#     col("awayteamid").cast(LongType()),
-#     col("homescore").cast(IntegerType()),
-#     col("awayscore").cast(IntegerType()),
-#     col("winner").cast(LongType()),
-#     col("gametype").cast(StringType()),
-#     col("attendance").cast(IntegerType()),
-#     col("arenaid").cast(IntegerType()),
-#     col("gamelabel").cast(StringType()),
-#     col("gamesublabel").cast(StringType()),
-#     col("seriesgamenumber").cast(IntegerType()),
-#     col("season").cast(IntegerType())
-# )
+df_typed = df_clean.select(
+    col("gameid").cast(LongType()),
+    col("gamedatetimeest").cast(StringType()),
+    col("hometeamcity").cast(StringType()),
+    col("hometeamname").cast(StringType()),
+    col("hometeamid").cast(LongType()),
+    col("awayteamcity").cast(StringType()),
+    col("awayteamname").cast(StringType()),
+    col("awayteamid").cast(LongType()),
+    col("homescore").cast(IntegerType()),
+    col("awayscore").cast(IntegerType()),
+    col("winner").cast(LongType()),
+    col("gametype").cast(StringType()),
+    col("attendance").cast(IntegerType()),
+    col("arenaid").cast(IntegerType()),
+    col("gamelabel").cast(StringType()),
+    col("gamesublabel").cast(StringType()),
+    col("seriesgamenumber").cast(IntegerType()),
+    col("season").cast(IntegerType())
+)
 
 # ------------------------------------------------------------------
 # 4. Parse timestamps + date fields
@@ -114,7 +125,7 @@ df_silver_base = (
     .filter(col("homescore") >= 0)
     .filter(col("awayscore") >= 0)
     .filter(col("attendance").isNull() | ((col("attendance") >= 0) & (col("attendance") <= 30000)))
-    .filter((col("game_year") >= 1946) & (col("game_year") <= 2100))
+    .filter((col("season") >= 1946) & (col("season") <= 2100))
 )
 
 # ------------------------------------------------------------------
@@ -137,12 +148,13 @@ df_silver = (
     .withColumn("silver_ingest_ts", current_timestamp())
     .withColumn("source_file", input_file_name())
 )
-print(df_silver)
+
 # ------------------------------------------------------------------
 # Write Silver + Quarantine
 # ------------------------------------------------------------------
-df_silver.write \
-    .mode("overwrite") \
-    .parquet("hdfs:///tmp/DE011025/NBA/silver/games")
-#df_bad.write.mode("overwrite").parquet(quarantine_path)
-spark.stop()
+df_silver.write.mode("overwrite").parquet(silver_path)
+df_bad.write.mode("overwrite").parquet(quarantine_path)
+
+print("Bronze count:", df_bronze.count())
+print("Silver count:", df_silver.count())
+print("Quarantine count:", df_bad.count())

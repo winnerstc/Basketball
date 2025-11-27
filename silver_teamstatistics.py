@@ -1,3 +1,4 @@
+# coding: utf-8
 from pyspark.sql import SparkSession
 from pyspark.sql.functions import (
     col, trim, upper, to_timestamp, to_date, year, month,
@@ -18,13 +19,9 @@ quarantine_path = "hdfs:///tmp/DE011025/NBA/quarantine/team_statistics"
 # ----------------------------------------------------------------------
 # 0. Read Bronze CSV
 # ----------------------------------------------------------------------
-df_bronze_raw = spark.read.csv(
-    bronze_path,
-    sep=",",
-    header=False,
-    inferSchema=True,
-    nullValue="null"
-)
+spark.sql("USE nba_bronze")
+df = spark.table("team_statistics")
+df = spark.sql("SELECT * FROM team_statistics")
 
 columns = [
     "gameId","gameDateTimeEst","teamCity","teamName","teamId",
@@ -41,7 +38,7 @@ columns = [
     "timesTied","timeoutsRemaining","seasonWins","seasonLosses","coachId"
 ]
 
-df_bronze = df_bronze_raw.toDF(*columns)
+df_bronze = df
 
 # ----------------------------------------------------------------------
 # 1. Normalize fake nulls
@@ -186,7 +183,7 @@ df_silver = (
 # ----------------------------------------------------------------------
 df_quarantine = (
     df_bad_keys
-    .unionByName(df_bad_nums, allowMissingColumns=True)
+    .unionByName(df_bad_nums)
     .withColumn("quarantine_ts", current_timestamp())
 )
 

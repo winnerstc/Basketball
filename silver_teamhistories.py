@@ -1,8 +1,8 @@
+# coding: utf-8
 from pyspark.sql import SparkSession
 from pyspark.sql.functions import (
-    col, trim, upper, initcap,
-    current_timestamp, current_date, year,
-    row_number, lit, concat_ws, greatest
+    col, trim, upper, to_timestamp, to_date, year, month,
+    current_timestamp, input_file_name, when, row_number, lit, initcap, concat_ws, current_date
 )
 from pyspark.sql.types import LongType, IntegerType, StringType
 from pyspark.sql.window import Window
@@ -19,14 +19,9 @@ quarantine_path = "hdfs:///tmp/DE011025/NBA/quarantine/team_histories"
 # ----------------------------------------------------------------------
 # 0. Read Bronze TEXTFILE as CSV (comma-separated, no header)
 # ----------------------------------------------------------------------
-df_bronze_raw = spark.read.csv(
-    bronze_path,
-    sep=",",
-    header=False,
-    inferSchema=True,
-    nullValue="null"    # "null" -> actual null
-)
-
+spark.sql("USE nba_bronze")
+df = spark.table("team_histories")
+df = spark.sql("SELECT * FROM team_histories")
 columns = [
     "teamId",
     "teamCity",
@@ -37,7 +32,7 @@ columns = [
     "league"
 ]
 
-df_bronze = df_bronze_raw.toDF(*columns)
+df_bronze = df
 
 # ----------------------------------------------------------------------
 # Transformation 1: Normalize fake nulls to real NULL
@@ -163,7 +158,7 @@ df_silver = (
 # ----------------------------------------------------------------------
 df_quarantine = (
     df_bad_numeric
-    .unionByName(df_bad_keys, allowMissingColumns=True)
+    .unionByName(df_bad_keys)
     .withColumn("quarantine_ts", current_timestamp())
 )
 
