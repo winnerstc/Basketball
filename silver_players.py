@@ -179,7 +179,7 @@ current_year_col = year(current_date())
 
 valid_numeric = (
     (col("height").isNull() | ((col("height") > 10) & (col("height") < 280))) &
-    (col("bodyWeight").isNull() | ((col("bodyWeight") > 50) & (col("bodyWeight") < 250))) 
+    (col("bodyWeight").isNull() | ((col("bodyWeight") > 0) & (col("bodyWeight") < 999))) 
 )
 
 df_numeric_ok = df_keys_ok.filter(valid_numeric)
