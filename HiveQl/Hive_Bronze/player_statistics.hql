@@ -1,0 +1,41 @@
+CREATE EXTERNAL TABLE player_statistics (
+    firstName                STRING,
+    lastName                 STRING,
+    personId                 BIGINT,
+    gameId                   BIGINT,
+    gameDateTimeEst          STRING,
+    playerteamCity           STRING,
+    playerteamName           STRING,
+    opponentteamCity         STRING,
+    opponentteamName         STRING,
+    gameType                 STRING,
+    gameLabel                STRING,
+    gameSubLabel             STRING,
+    seriesGameNumber         INT,
+    win                      INT,
+    home                     INT,
+    numMinutes               DOUBLE,
+    points                   DOUBLE,
+    assists                  DOUBLE,
+    blocks                   DOUBLE,
+    steals                   DOUBLE,
+    fieldGoalsAttempted      DOUBLE,
+    fieldGoalsMade           DOUBLE,
+    fieldGoalsPercentage     DOUBLE,
+    threePointersAttempted   DOUBLE,
+    threePointersMade        DOUBLE,
+    threePointersPercentage  DOUBLE,
+    freeThrowsAttempted      DOUBLE,
+    freeThrowsMade           DOUBLE,
+    freeThrowsPercentage     DOUBLE,
+    reboundsDefensive        DOUBLE,
+    reboundsOffensive        DOUBLE,
+    reboundsTotal            DOUBLE,
+    foulsPersonal            DOUBLE,
+    turnovers                DOUBLE,
+    plusMinusPoints          DOUBLE
+)
+ROW FORMAT DELIMITED
+FIELDS TERMINATED BY ','
+STORED AS TEXTFILE
+LOCATION '/tmp/DE011025/NBA/bronze/PlayerStatistics';
