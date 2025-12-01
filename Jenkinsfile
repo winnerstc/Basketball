@@ -8,6 +8,135 @@ pipeline {
                 checkout scm
             }
         }
+        stage('Sqoop games'){
+            steps{
+            HIVE_DB="nba_bronze"
+            HIVE_TABLE="games"
+            CHECK_COL="gameId"
+            TARGET_DIR="/tmp/DE011025/NBA/bronze/games"
+
+            LAST_VALUE=$(hive -S -e "SELECT COALESCE(MAX(${CHECK_COL}),0) FROM ${HIVE_DB}.${HIVE_TABLE};")
+
+            echo "Last imported ${CHECK_COL}: ${LAST_VALUE}"
+
+            sqoop import \
+            --connect jdbc:postgresql://18.134.163.221:5432/raji_database \
+            --username admin \
+            --password admin123 \
+            --table games \
+            --target-dir ${TARGET_DIR} \
+            --fields-terminated-by ',' \
+            --as-textfile \
+            --num-mappers 1 \
+            --incremental append \
+            --check-column ${CHECK_COL} \
+            --last-value ${LAST_VALUE}
+            }
+        }
+
+        stage('Sqoop PlayerStatistics'){
+            steps{
+            HIVE_DB="nba_bronze"
+            HIVE_TABLE="player_statistics"
+            CHECK_COL="gameId"
+            TARGET_DIR="/tmp/DE011025/NBA/bronze/player_statistics"
+
+            LAST_VALUE=$(hive -S -e "SELECT COALESCE(MAX(${CHECK_COL}),0) FROM ${HIVE_DB}.${HIVE_TABLE};")
+
+            echo "Last imported ${CHECK_COL}: ${LAST_VALUE}"
+
+            sqoop import \
+            --connect jdbc:postgresql://18.134.163.221:5432/testdb \
+            --username admin \
+            --password admin123 \
+            --table player_statistics \
+            --target-dir ${TARGET_DIR} \
+            --fields-terminated-by ',' \
+            --as-textfile \
+            --num-mappers 1 \
+            --incremental append \
+            --check-column ${CHECK_COL} \
+            --last-value ${LAST_VALUE}
+            }
+        }
+        
+        stage('Sqoop Players'){
+            steps{
+            HIVE_DB="nba_bronze"
+            HIVE_TABLE="players"
+            CHECK_COL="personId"
+            TARGET_DIR="/tmp/DE011025/NBA/bronze/games"
+
+            LAST_VALUE=$(hive -S -e "SELECT COALESCE(MAX(${CHECK_COL}),0) FROM ${HIVE_DB}.${HIVE_TABLE};")
+
+            echo "Last imported ${CHECK_COL}: ${LAST_VALUE}"
+
+            sqoop import \
+            --connect jdbc:postgresql://18.134.163.221:5432/testdb  \
+            --username admin \
+            --password admin123 \
+            --table players \
+            --target-dir ${TARGET_DIR} \
+            --fields-terminated-by ',' \
+            --as-textfile \
+            --num-mappers 1 \
+            --incremental append \
+            --check-column ${CHECK_COL} \
+            --last-value ${LAST_VALUE}
+            }
+        }
+        stage('Sqoop TeamHistories'){
+            steps{
+            HIVE_DB="nba_bronze"
+            HIVE_TABLE="team_histories"
+            CHECK_COL="teamId"
+            TARGET_DIR="/tmp/DE011025/NBA/bronze/team_histories"
+
+            LAST_VALUE=$(hive -S -e "SELECT COALESCE(MAX(${CHECK_COL}),0) FROM ${HIVE_DB}.${HIVE_TABLE};")
+
+            echo "Last imported ${CHECK_COL}: ${LAST_VALUE}"
+
+            sqoop import \
+            --connect jdbc:postgresql://18.134.163.221:5432/testdb  \
+            --username admin \
+            --password admin123 \
+            --table team_histories \
+            --target-dir ${TARGET_DIR} \
+            --fields-terminated-by ',' \
+            --as-textfile \
+            --num-mappers 1 \
+            --incremental append \
+            --check-column ${CHECK_COL} \
+            --last-value ${LAST_VALUE}
+            }
+        }
+        stage('Sqoop TeamStatistics'){
+            steps{
+            HIVE_DB="nba_bronze"
+            HIVE_TABLE="team_statistics"
+            CHECK_COL="gameId"
+            TARGET_DIR="/tmp/DE011025/NBA/bronze/games"
+
+            LAST_VALUE=$(hive -S -e "SELECT COALESCE(MAX(${CHECK_COL}),0) FROM ${HIVE_DB}.${HIVE_TABLE};")
+
+            echo "Last imported ${CHECK_COL}: ${LAST_VALUE}"
+
+            sqoop import \
+            --connect jdbc:postgresql://18.134.163.221:5432/testdb \
+            --username admin \
+            --password admin123 \
+            --table team_statistics \
+            --target-dir ${TARGET_DIR} \
+            --fields-terminated-by ',' \
+            --as-textfile \
+            --num-mappers 1 \
+            --incremental append \
+            --check-column ${CHECK_COL} \
+            --last-value ${LAST_VALUE}
+            }
+        }
+
+
 
         stage('Run silver Silver Players script') {
             steps {
@@ -69,6 +198,7 @@ pipeline {
                 '''
             }
         }
+
     }
 
     post {
