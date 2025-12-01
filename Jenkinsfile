@@ -10,6 +10,7 @@ pipeline {
         }
         stage('Sqoop games'){
             steps{
+                 sh """
             HIVE_DB="nba_bronze"
             HIVE_TABLE="games"
             CHECK_COL="gameId"
@@ -31,11 +32,14 @@ pipeline {
             --incremental append \
             --check-column ${CHECK_COL} \
             --last-value ${LAST_VALUE}
+            """
             }
         }
 
         stage('Sqoop PlayerStatistics'){
+            
             steps{
+                 sh """
             HIVE_DB="nba_bronze"
             HIVE_TABLE="player_statistics"
             CHECK_COL="gameId"
@@ -57,11 +61,13 @@ pipeline {
             --incremental append \
             --check-column ${CHECK_COL} \
             --last-value ${LAST_VALUE}
+            """
             }
         }
         
         stage('Sqoop Players'){
             steps{
+                 sh """
             HIVE_DB="nba_bronze"
             HIVE_TABLE="players"
             CHECK_COL="personId"
@@ -83,10 +89,12 @@ pipeline {
             --incremental append \
             --check-column ${CHECK_COL} \
             --last-value ${LAST_VALUE}
+            """
             }
         }
         stage('Sqoop TeamHistories'){
             steps{
+                 sh """
             HIVE_DB="nba_bronze"
             HIVE_TABLE="team_histories"
             CHECK_COL="teamId"
@@ -108,10 +116,12 @@ pipeline {
             --incremental append \
             --check-column ${CHECK_COL} \
             --last-value ${LAST_VALUE}
+            """
             }
         }
         stage('Sqoop TeamStatistics'){
             steps{
+                 sh """
             HIVE_DB="nba_bronze"
             HIVE_TABLE="team_statistics"
             CHECK_COL="gameId"
@@ -133,6 +143,7 @@ pipeline {
             --incremental append \
             --check-column ${CHECK_COL} \
             --last-value ${LAST_VALUE}
+            """
             }
         }
 
