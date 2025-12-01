@@ -20,12 +20,41 @@ gold_db = "nba_gold"
 
 spark.sql("CREATE DATABASE IF NOT EXISTS {}".format(gold_db))
 
-player_stats_table = "{}.player_statistics_silver".format(silver_db)
-games_table = "{}.games_silver".format(silver_db)
+# ----------------------------------------------------------------------
+# NUKE EXISTING GOLD TABLES + HDFS DIRECTORIES
+# ----------------------------------------------------------------------
+gold_tables = [
+    "player_assists_per_game_gold",
+    "player_rebounds_per_game_gold",
+    "team_win_percentage_gold",
+    "player_points_per_game_gold",
+    "player_total_points_per_season_gold",
+    "player_total_assists_per_season_gold",
+    "player_total_rebounds_per_season_gold",
+    "team_double_digit_wins_per_season_gold"
+]
+
+# 1) Drop tables in Hive if they exist
+for tbl in gold_tables:
+    spark.sql("DROP TABLE IF EXISTS {}.{}".format(gold_db, tbl))
+
+# 2) Delete underlying HDFS directories under /tmp/DE011025/NBA/gold/<table_name>
+hadoop_conf = spark._jsc.hadoopConfiguration()
+fs = spark._jvm.org.apache.hadoop.fs.FileSystem.get(hadoop_conf)
+base_path = "/tmp/DE011025/NBA/gold"
+
+for tbl in gold_tables:
+    path_str = "{}/{}".format(base_path, tbl)
+    path = spark._jvm.org.apache.hadoop.fs.Path(path_str)
+    if fs.exists(path):
+        fs.delete(path, True)  # recursive delete
 
 # ----------------------------------------------------------------------
 # Load Silver tables once
 # ----------------------------------------------------------------------
+player_stats_table = "{}.player_statistics_silver".format(silver_db)
+games_table = "{}.games_silver".format(silver_db)
+
 df_stats = spark.table(player_stats_table)
 df_games = spark.table(games_table)
 
@@ -97,7 +126,7 @@ game_results_away = (
         )
 )
 
-# Use standard union (works on older Spark) – schemas line up by position
+# Use standard union (schemas line up by position)
 game_results = game_results_home.select("year", "teamId", "win").union(
     game_results_away.select("year", "teamId", "win")
 )
@@ -171,7 +200,7 @@ df_total_assists_season.write.mode("overwrite").format("parquet").saveAsTable(
 )
 
 # ----------------------------------------------------------------------
-# Transform to Gold: total rebounds per season per player
+# 7) Total rebounds per player per season (Gold)
 # ----------------------------------------------------------------------
 df_total_rebounds_season = (
     df_stats
@@ -182,17 +211,12 @@ df_total_rebounds_season = (
         .orderBy("game_year", col("total_rebounds").desc())
 )
 
-# ----------------------------------------------------------------------
-# Write to Gold table
-# ----------------------------------------------------------------------
 df_total_rebounds_season.write.mode("overwrite").format("parquet").saveAsTable(
     "{}.player_total_rebounds_per_season_gold".format(gold_db)
 )
 
-
 # -------------------------------------------------------------
-# 1) Home double-digit wins
-# CASE WHEN (homeScore - awayScore) >= 10 THEN 1 ELSE 0 END
+# 8) Team double-digit wins per season (Gold)
 # -------------------------------------------------------------
 home_dd_wins = (
     df_games
@@ -205,10 +229,6 @@ home_dd_wins = (
         )
 )
 
-# -------------------------------------------------------------
-# 2) Away double-digit wins
-# CASE WHEN (awayScore - homeScore) >= 10 THEN 1 ELSE 0 END
-# -------------------------------------------------------------
 away_dd_wins = (
     df_games
         .select(
@@ -220,14 +240,8 @@ away_dd_wins = (
         )
 )
 
-# -------------------------------------------------------------
-# 3) UNION ALL home + away results
-# -------------------------------------------------------------
 all_dd_wins = home_dd_wins.unionByName(away_dd_wins)
 
-# -------------------------------------------------------------
-# 4) Aggregate by season + team
-# -------------------------------------------------------------
 df_double_digit_wins = (
     all_dd_wins
         .groupBy("game_year", "team")
@@ -237,13 +251,9 @@ df_double_digit_wins = (
         .orderBy("game_year", col("double_digit_wins").desc())
 )
 
-# -------------------------------------------------------------
-# 5) Write to Gold table
-# -------------------------------------------------------------
 df_double_digit_wins.write.mode("overwrite").format("parquet").saveAsTable(
     "{}.team_double_digit_wins_per_season_gold".format(gold_db)
 )
-
 
 # ----------------------------------------------------------------------
 # Done
