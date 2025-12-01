@@ -25,6 +25,7 @@ df_bronze_raw = spark.read.csv(
     inferSchema=True,
     nullValue="null"
 )
+df_bronze_raw = df_bronze_raw
 
 columns = [
     "gameid","gamedatetimeest","hometeamcity","hometeamname","hometeamid",
