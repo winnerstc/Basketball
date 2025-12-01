@@ -1,7 +1,8 @@
+# coding: utf-8
 from pyspark.sql import SparkSession
 from pyspark.sql.functions import (
     col, trim, upper, initcap, to_date, current_timestamp,
-    current_date, datediff, when, input_file_name, row_number, lit
+    current_date, datediff, when, input_file_name, row_number, lit, year
 )
 from pyspark.sql.types import LongType, IntegerType, DoubleType, StringType
 from pyspark.sql.window import Window
@@ -18,13 +19,9 @@ quarantine_path = "hdfs:///tmp/DE011025/NBA/quarantine/players"
 # ------------------------------------------------------------------
 # 0. Read Bronze TEXTFILE as CSV (comma-separated, no header)
 # ------------------------------------------------------------------
-df_bronze_raw = spark.read.csv(
-    bronze_path,
-    sep=",",
-    header=False,
-    inferSchema=True,
-    nullValue="null"    # "null" → real null
-)
+spark.sql("USE nba_bronze")
+df = spark.table("players")
+df = spark.sql("SELECT * FROM players")
 
 columns = [
     "personId",
@@ -43,12 +40,20 @@ columns = [
     "draftNumber"
 ]
 
-df_bronze = df_bronze_raw.toDF(*columns)
+df_bronze = df
 
 # ------------------------------------------------------------------
 # Transformation 1: Normalize fake nulls to real NULL
 # ------------------------------------------------------------------
-df_norm_nulls = df_bronze.replace(["nul", "NULL", "NA", ""], None)
+cols_exclude = ["guard", "forward", "center"]
+
+cols_to_clean = [c for c in df_bronze.columns if c not in cols_exclude]
+
+df_norm_nulls = df_bronze.replace(
+    ["nul", "NULL", "NA", ""],
+    None,
+    subset=cols_to_clean
+)
 
 # ------------------------------------------------------------------
 # Transformation 2: Enforce correct data types (schema casting)
@@ -105,10 +110,15 @@ df_text_norm = (
 df_with_birth = (
     df_text_norm
     .withColumn("birth_date", to_date(col("birthdate"), "yyyy-MM-dd"))
-    .withColumn("birth_year", when(col("birth_date").isNotNull(), col("birth_date").substr(1, 4).cast(IntegerType())))
+    .withColumn(
+        "birth_year",
+        when(col("birth_date").isNotNull(), col("birth_date").substr(1, 4).cast(IntegerType()))
+    )
 )
 
+# ------------------------------------------------------------------
 # Transformation 6: Derive age (approximate)
+# ------------------------------------------------------------------
 df_with_age = df_with_birth.withColumn(
     "age_years",
     when(
@@ -121,14 +131,17 @@ df_with_age = df_with_birth.withColumn(
 # Transformation 7: Normalize position flags (guard/forward/center)
 #   Convert Y/Yes/1 -> 1, else 0
 # ------------------------------------------------------------------
-def norm_pos_flag(c):
-    return when(col(c).isin("Y", "y", "YES", "Yes", "1", 1), 1).otherwise(0)
+from pyspark.sql.functions import coalesce, lit
+
+def norm_pos_flag_bool(c):
+    # coalesce(col(c), lit(False)) handles nulls as False
+    return when(coalesce(col(c).cast("boolean"), lit(False)) == True, 1).otherwise(0)
 
 df_pos_norm = (
     df_with_age
-    .withColumn("guard_flag", norm_pos_flag("guard"))
-    .withColumn("forward_flag", norm_pos_flag("forward"))
-    .withColumn("center_flag", norm_pos_flag("center"))
+    .withColumn("guard_flag",   norm_pos_flag_bool("guard"))
+    .withColumn("forward_flag", norm_pos_flag_bool("forward"))
+    .withColumn("center_flag",  norm_pos_flag_bool("center"))
 )
 
 # ------------------------------------------------------------------
@@ -146,8 +159,11 @@ df_with_pos = df_pos_norm.withColumn(
 # Transformation 9: Drop rows with null business key (personId)
 #   (But capture them in quarantine first)
 # ------------------------------------------------------------------
-df_bad_keys = df_with_pos.filter(col("personId").isNull()) \
-                         .withColumn("quarantine_reason", lit("MISSING_PERSON_ID"))
+df_bad_keys = (
+    df_with_pos
+    .filter(col("personId").isNull())
+    .withColumn("quarantine_reason", lit("MISSING_PERSON_ID"))
+)
 
 df_keys_ok = df_with_pos.filter(col("personId").isNotNull())
 
@@ -159,18 +175,68 @@ df_keys_ok = df_with_pos.filter(col("personId").isNotNull())
 #   - draftRound: 1–10 (very wide)
 #   - draftNumber: > 0
 # ------------------------------------------------------------------
-from pyspark.sql.functions import year
-
-current_year = year(current_date())
+current_year_col = year(current_date())
 
 valid_numeric = (
-    (col("height").isNull() | ((col("height") > 100) & (col("height") < 280))) &
-    (col("bodyWeight").isNull() | ((col("bodyWeight") > 50) & (col("bodyWeight") < 250))) &
-    (col("draftYear").isNull() | ((col("draftYear") >= 1946) & (col("draftYear") <= current_year + 1))) &
-    (col("draftRound").isNull() | ((col("draftRound") >= 1) & (col("draftRound") <= 10))) &
-    (col("draftNumber").isNull() | (col("draftNumber") > 0))
+    (col("height").isNull() | ((col("height") > 10) & (col("height") < 280))) &
+    (col("bodyWeight").isNull() | ((col("bodyWeight") > 50) & (col("bodyWeight") < 250))) 
 )
 
 df_numeric_ok = df_keys_ok.filter(valid_numeric)
-df_bad_numeric = df_keys_ok.filter(~valid_numeric) \
-                           .withColumn("quarantine_r_
+
+df_bad_numeric = (
+    df_keys_ok
+    .filter(~valid_numeric)
+    .withColumn("quarantine_reason", lit("INVALID_NUMERIC_RANGE"))
+)
+
+# ------------------------------------------------------------------
+# Transformation 11: Build quarantine dataframe (bad keys + bad numeric)
+#   + attach technical columns
+# ------------------------------------------------------------------
+df_quarantine = (
+    df_bad_keys
+    .unionByName(df_bad_numeric)
+    .withColumn("record_source", lit("NBA_PLAYERS_BRONZE"))
+    .withColumn("silver_ingest_ts", current_timestamp())
+    .withColumn("source_file", input_file_name())
+)
+
+# ------------------------------------------------------------------
+# Transformation 12: Deduplicate on business key (personId)
+#   Keep "best" record per personId (latest birth_date, then latest draftYear)
+# ------------------------------------------------------------------
+w_dedup = Window.partitionBy("personId").orderBy(
+    col("birth_date").desc(),
+    col("draftYear").desc()
+)
+
+df_silver_dedup = (
+    df_numeric_ok
+    .withColumn("rn", row_number().over(w_dedup))
+    .filter(col("rn") == 1)
+    .drop("rn")
+)
+
+# ------------------------------------------------------------------
+# Transformation 13: Add standard Silver metadata columns
+# ------------------------------------------------------------------
+df_silver_final = (
+    df_silver_dedup
+    .withColumn("record_source", lit("NBA_PLAYERS_BRONZE"))
+    .withColumn("silver_ingest_ts", current_timestamp())
+    .withColumn("source_file", lit("hive_table:nba_bronze.players"))
+)
+
+
+# ------------------------------------------------------------------
+# WRITE OUT: Silver + Quarantine as Parquet
+# ------------------------------------------------------------------
+(
+    df_silver_final
+    .write
+    .mode("overwrite")       # or "append" depending on your load pattern
+    .parquet(silver_path)
+)
+
+spark.stop()
