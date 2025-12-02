@@ -16,7 +16,7 @@ pipeline {
 
             HIVE_DB="nba_bronze"
             HIVE_TABLE="games"
-            CHECK_COL="gameid"              # keep Hive lowercase if that’s how you created it
+            CHECK_COL="\"gameId"\"              # keep Hive lowercase if that’s how you created it
             TARGET_DIR="/tmp/DE011025/NBA/bronze/games"
 
             echo "Getting last ${CHECK_COL} from Hive..."
