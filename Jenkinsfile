@@ -38,7 +38,7 @@ pipeline {
             --username admin \
             --password admin123 \
             --driver org.postgresql.Driver \
-            --query "SELECT * FROM games WHERE \\\"gameDateTimeEst\\\" > ${LAST_VALUE} AND \\$CONDITIONS" \
+            --query "SELECT * FROM games WHERE \\\"gameDateTimeEst\\\" > '${LAST_VALUE}' AND \\$CONDITIONS" \
             --split-by "\"gameId\"" \
             --target-dir ${TARGET_DIR} \
             --fields-terminated-by ',' \
@@ -76,7 +76,7 @@ pipeline {
             --username admin \
             --password admin123 \
             --driver org.postgresql.Driver \
-            --query "SELECT * FROM player_statistics WHERE \\\"gameDateTimeEst\\\" > ${LAST_VALUE} AND \\$CONDITIONS" \
+            --query "SELECT * FROM player_statistics WHERE \\\"gameDateTimeEst\\\" > '${LAST_VALUE}' AND \\$CONDITIONS" \
             --split-by "\"gameId\"" \
             --target-dir ${TARGET_DIR} \
             --fields-terminated-by ',' \
@@ -181,7 +181,7 @@ pipeline {
           --username admin \
           --password admin123 \
           --driver org.postgresql.Driver \
-          --query "SELECT * FROM team_statistics WHERE \\\"gameDateTimeEst\\\" > ${LAST_VALUE} AND \\$CONDITIONS" \
+          --query "SELECT * FROM team_statistics WHERE \\\"gameDateTimeEst\\\" > '${LAST_VALUE}' AND \\$CONDITIONS" \
           --split-by "\"gameId\"" \
           --target-dir ${TARGET_DIR} \
           --fields-terminated-by ',' \
