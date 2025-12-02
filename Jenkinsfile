@@ -24,7 +24,7 @@ pipeline {
                 echo "Last imported ${CHECK_COL}: ${LAST_VALUE}"
 
                 sqoop import \
-                  --connect jdbc:postgresql://18.134.163.221:5432/raji_database \
+                  --connect jdbc:postgresql://18.134.163.221:5432/testdb \
                   --username admin \
                   --password admin123 \
                   --table games \
