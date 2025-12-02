@@ -50,7 +50,7 @@ pipeline {
           --num-mappers 1 \
           --delete-target-dir
         '''
-    }
+    
 }
 
 }
