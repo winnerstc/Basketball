@@ -32,7 +32,7 @@ pipeline {
                 --username admin \
                 --password admin123 \
                 --driver org.postgresql.Driver \
-                --query "SELECT * FROM games WHERE gameId > ${LAST_VALUE} AND \\$CONDITIONS" \
+                --query "SELECT * FROM games WHERE "gameId" > ${LAST_VALUE} AND \\$CONDITIONS" \
                 --split-by gameid \
                 --target-dir ${TARGET_DIR} \
                 --fields-terminated-by ',' \
