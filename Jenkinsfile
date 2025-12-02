@@ -22,9 +22,7 @@ pipeline {
             echo "Getting last ${CHECK_COL} from Hive..."
 
             # Run Hive, disable header, grab the last line, strip whitespace
-            LAST_VALUE=$(hive -e "SELECT COALESCE(MAX(gamedatetimeest),0) FROM nba_bronze.games" 2>/dev/null || echo 0  | tail
- -n 1
-            )
+            LAST_VALUE=$(hive -e "SELECT COALESCE(MAX(gamedatetimeest),0) FROM nba_bronze.games" 2>/dev/null || echo 0  | tail -n 1)
 
             echo "Raw LAST_VALUE from Hive: '${LAST_VALUE}'"
 
