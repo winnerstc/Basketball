@@ -10,38 +10,39 @@ pipeline {
         }
 
         stage('Sqoop games'){
-            steps {
-                sh '''#!/bin/bash
-                set -e
+    steps {
+        sh '''#!/bin/bash
+        set -e
 
-                HIVE_DB="nba_bronze"
-                HIVE_TABLE="games"
-                CHECK_COL="gameId"
-                TARGET_DIR="/tmp/DE011025/NBA/bronze/games"
+        HIVE_DB="nba_bronze"
+        HIVE_TABLE="games"
+        CHECK_COL="gameid"              # keep Hive lowercase if that’s how you created it
+        TARGET_DIR="/tmp/DE011025/NBA/bronze/games"
 
-                echo "Getting last ${CHECK_COL} from Hive..."
+        echo "Getting last ${CHECK_COL} from Hive..."
 
-                LAST_VALUE=$(
-                ( hive -S -e "SELECT COALESCE(MAX(${CHECK_COL}),0) FROM ${HIVE_DB}.${HIVE_TABLE}" 2>/dev/null || echo 0 ) | tail -n 1
-                )
+        LAST_VALUE=$(
+          ( hive -S -e "SELECT COALESCE(MAX(${CHECK_COL}),0) FROM ${HIVE_DB}.${HIVE_TABLE}" 2>/dev/null || echo 0 ) | tail -n 1
+        )
 
-                echo "Last imported ${CHECK_COL}: ${LAST_VALUE}"
+        echo "Last imported ${CHECK_COL}: ${LAST_VALUE}"
 
-                sqoop import \
-                --connect jdbc:postgresql://18.134.163.221:5432/testdb \
-                --username admin \
-                --password admin123 \
-                --driver org.postgresql.Driver \
-                --query "SELECT * FROM games WHERE "gameId" > ${LAST_VALUE} AND \\$CONDITIONS" \
-                --split-by gameid \
-                --target-dir ${TARGET_DIR} \
-                --fields-terminated-by ',' \
-                --as-textfile \
-                --num-mappers 1 \
-                --delete-target-dir
-                '''
-            }
-        }
+        sqoop import \
+          --connect jdbc:postgresql://18.134.163.221:5432/testdb \
+          --username admin \
+          --password admin123 \
+          --driver org.postgresql.Driver \
+          --query "SELECT * FROM games WHERE \\\"gameId\\\" > ${LAST_VALUE} AND \\$CONDITIONS" \
+          --split-by "\"gameId\"" \
+          --target-dir ${TARGET_DIR} \
+          --fields-terminated-by ',' \
+          --as-textfile \
+          --num-mappers 1 \
+          --delete-target-dir
+        '''
+    }
+}
+
 
 
         stage('Sqoop PlayerStatistics'){
