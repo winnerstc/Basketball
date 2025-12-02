@@ -1,6 +1,6 @@
 pipeline {
     agent any  // or { label 'hadoop-edge' } if you have a specific node
-
+//
     stages {
         stage('Checkout') {
             steps {
@@ -9,188 +9,188 @@ pipeline {
             }
         }
 
-        stage('Sqoop games'){
-        steps {
-            sh '''#!/bin/bash
-            set -e
+//         stage('Sqoop games'){
+//         steps {
+//             sh '''#!/bin/bash
+//             set -e
 
-            HIVE_DB="nba_bronze"
-            HIVE_TABLE="games"
-            CHECK_COL="gamedatetimeest"             # HIVE column, lowercase
-            TARGET_DIR="/tmp/DE011025/NBA/bronze/games"
+//             HIVE_DB="nba_bronze"
+//             HIVE_TABLE="games"
+//             CHECK_COL="gamedatetimeest"             # HIVE column, lowercase
+//             TARGET_DIR="/tmp/DE011025/NBA/bronze/games"
 
-            echo "Getting last ${CHECK_COL} from Hive..."
+//             echo "Getting last ${CHECK_COL} from Hive..."
 
-            # Run Hive, disable header, grab the last line, strip whitespace
-            LAST_VALUE=$(hive -e "SELECT COALESCE(MAX(gamedatetimeest),0) FROM nba_bronze.games" 2>/dev/null || echo 0  | tail -n 1)
+//             # Run Hive, disable header, grab the last line, strip whitespace
+//             LAST_VALUE=$(hive -e "SELECT COALESCE(MAX(gamedatetimeest),0) FROM nba_bronze.games" 2>/dev/null || echo 0  | tail -n 1)
 
-            echo "Raw LAST_VALUE from Hive: '${LAST_VALUE}'"
+//             echo "Raw LAST_VALUE from Hive: '${LAST_VALUE}'"
 
-            if [ -z "${LAST_VALUE}" ]; then
-            echo "LAST_VALUE is empty, defaulting to 0"
-            LAST_VALUE=0
-            fi
+//             if [ -z "${LAST_VALUE}" ]; then
+//             echo "LAST_VALUE is empty, defaulting to 0"
+//             LAST_VALUE=0
+//             fi
 
-            echo "Final LAST_VALUE used: ${LAST_VALUE}"
+//             echo "Final LAST_VALUE used: ${LAST_VALUE}"
 
-            sqoop import \
-            --connect jdbc:postgresql://18.134.163.221:5432/testdb \
-            --username admin \
-            --password admin123 \
-            --driver org.postgresql.Driver \
-            --query "SELECT * FROM games WHERE \\\"gameDateTimeEst\\\" > '${LAST_VALUE}' AND \\$CONDITIONS" \
-            --split-by "\"gameId\"" \
-            --target-dir ${TARGET_DIR} \
-            --fields-terminated-by ',' \
-            --as-textfile \
-            --num-mappers 1 \
-            --delete-target-dir
-            '''
+//             sqoop import \
+//             --connect jdbc:postgresql://18.134.163.221:5432/testdb \
+//             --username admin \
+//             --password admin123 \
+//             --driver org.postgresql.Driver \
+//             --query "SELECT * FROM games WHERE \\\"gameDateTimeEst\\\" > '${LAST_VALUE}' AND \\$CONDITIONS" \
+//             --split-by "\"gameId\"" \
+//             --target-dir ${TARGET_DIR} \
+//             --fields-terminated-by ',' \
+//             --as-textfile \
+//             --num-mappers 1 \
+//             --delete-target-dir
+//             '''
         
-            }
+//             }
 
-        }
+//         }
 
 
 
-        stage('Sqoop PlayerStatistics'){
-        steps {
-            sh '''#!/bin/bash
-            set -e
+//         stage('Sqoop PlayerStatistics'){
+//         steps {
+//             sh '''#!/bin/bash
+//             set -e
 
-            HIVE_DB="nba_bronze"
-            HIVE_TABLE="player_statistics"
-            CHECK_COL="gameid"
-            TARGET_DIR="/tmp/DE011025/NBA/bronze/player_statistics"
+//             HIVE_DB="nba_bronze"
+//             HIVE_TABLE="player_statistics"
+//             CHECK_COL="gameid"
+//             TARGET_DIR="/tmp/DE011025/NBA/bronze/player_statistics"
 
-            echo "Getting last ${CHECK_COL} from Hive..."
+//             echo "Getting last ${CHECK_COL} from Hive..."
 
-            LAST_VALUE=$(
-            ( hive -e "SELECT COALESCE(MAX(gamedatetimeest),0) FROM nba_bronze.player_statistics" 2>/dev/null || echo 0  | tail -n 1)
-            )
+//             LAST_VALUE=$(
+//             ( hive -e "SELECT COALESCE(MAX(gamedatetimeest),0) FROM nba_bronze.player_statistics" 2>/dev/null || echo 0  | tail -n 1)
+//             )
 
-            echo "Last imported ${CHECK_COL}: ${LAST_VALUE}"
+//             echo "Last imported ${CHECK_COL}: ${LAST_VALUE}"
 
-            sqoop import \
-            --connect jdbc:postgresql://18.134.163.221:5432/testdb \
-            --username admin \
-            --password admin123 \
-            --driver org.postgresql.Driver \
-            --query "SELECT * FROM player_statistics WHERE \\\"gameDateTimeEst\\\" > '${LAST_VALUE}' AND \\$CONDITIONS" \
-            --split-by "\"gameId\"" \
-            --target-dir ${TARGET_DIR} \
-            --fields-terminated-by ',' \
-            --as-textfile \
-            --num-mappers 1 \
-            --delete-target-dir
-            '''
-        }
-    }
+//             sqoop import \
+//             --connect jdbc:postgresql://18.134.163.221:5432/testdb \
+//             --username admin \
+//             --password admin123 \
+//             --driver org.postgresql.Driver \
+//             --query "SELECT * FROM player_statistics WHERE \\\"gameDateTimeEst\\\" > '${LAST_VALUE}' AND \\$CONDITIONS" \
+//             --split-by "\"gameId\"" \
+//             --target-dir ${TARGET_DIR} \
+//             --fields-terminated-by ',' \
+//             --as-textfile \
+//             --num-mappers 1 \
+//             --delete-target-dir
+//             '''
+//         }
+//     }
 
         
-        stage('Sqoop Players'){
-        steps {
-            sh '''#!/bin/bash
-            set -e
+//         stage('Sqoop Players'){
+//         steps {
+//             sh '''#!/bin/bash
+//             set -e
 
-            HIVE_DB="nba_bronze"
-            HIVE_TABLE="players"
-            CHECK_COL="personid"
-            TARGET_DIR="/tmp/DE011025/NBA/bronze/players"
+//             HIVE_DB="nba_bronze"
+//             HIVE_TABLE="players"
+//             CHECK_COL="personid"
+//             TARGET_DIR="/tmp/DE011025/NBA/bronze/players"
 
-            echo "Getting last ${CHECK_COL} from Hive..."
+//             echo "Getting last ${CHECK_COL} from Hive..."
 
-            LAST_VALUE=$(
-            ( hive -e "SELECT COALESCE(MAX(personid),0) FROM nba_bronze.players" 2>/dev/null || echo 0  | tail -n 1)
-            )
+//             LAST_VALUE=$(
+//             ( hive -e "SELECT COALESCE(MAX(personid),0) FROM nba_bronze.players" 2>/dev/null || echo 0  | tail -n 1)
+//             )
 
-            echo "Last imported ${CHECK_COL}: ${LAST_VALUE}"
+//             echo "Last imported ${CHECK_COL}: ${LAST_VALUE}"
 
-            sqoop import \
-            --connect jdbc:postgresql://18.134.163.221:5432/testdb  \
-            --username admin \
-            --password admin123 \
-            --driver org.postgresql.Driver \
-            --query "SELECT * FROM players WHERE \\\"personId\\\" > ${LAST_VALUE} AND \\$CONDITIONS" \
-            --split-by "\"personId\"" \
-            --target-dir ${TARGET_DIR} \
-            --fields-terminated-by ',' \
-            --as-textfile \
-            --num-mappers 1 \
-            --delete-target-dir
-            '''
-        }
-    }
-
-
-      stage('Sqoop TeamHistories'){
-    steps {
-        sh '''#!/bin/bash
-        set -e
-
-        HIVE_DB="nba_bronze"
-        HIVE_TABLE="team_histories"
-        CHECK_COL="teamid"
-        TARGET_DIR="/tmp/DE011025/NBA/bronze/team_histories"
-
-        echo "Getting last ${CHECK_COL} from Hive..."
-
-        LAST_VALUE=$(
-          (hive -e "SELECT COALESCE(MAX(teamid),0) FROM nba_bronze.team_histories" 2>/dev/null || echo 0  | tail -n 1)
-        )
-
-        echo "Last imported ${CHECK_COL}: ${LAST_VALUE}"
-
-        sqoop import \
-          --connect jdbc:postgresql://18.134.163.221:5432/testdb  \
-          --username admin \
-          --password admin123 \
-          --driver org.postgresql.Driver \
-          --query "SELECT * FROM team_histories WHERE \\\"teamId\\\" > ${LAST_VALUE} AND \\$CONDITIONS" \
-          --split-by "\"teamId\"" \
-          --target-dir ${TARGET_DIR} \
-          --fields-terminated-by ',' \
-          --as-textfile \
-          --num-mappers 1 \
-          --delete-target-dir
-        '''
-    }
-}
+//             sqoop import \
+//             --connect jdbc:postgresql://18.134.163.221:5432/testdb  \
+//             --username admin \
+//             --password admin123 \
+//             --driver org.postgresql.Driver \
+//             --query "SELECT * FROM players WHERE \\\"personId\\\" > ${LAST_VALUE} AND \\$CONDITIONS" \
+//             --split-by "\"personId\"" \
+//             --target-dir ${TARGET_DIR} \
+//             --fields-terminated-by ',' \
+//             --as-textfile \
+//             --num-mappers 1 \
+//             --delete-target-dir
+//             '''
+//         }
+//     }
 
 
-        stage('Sqoop TeamStatistics'){
-    steps {
-        sh '''#!/bin/bash
-        set -e
+//       stage('Sqoop TeamHistories'){
+//     steps {
+//         sh '''#!/bin/bash
+//         set -e
 
-        HIVE_DB="nba_bronze"
-        HIVE_TABLE="team_statistics"
-        CHECK_COL="gameid"
-        TARGET_DIR="/tmp/DE011025/NBA/bronze/team_statistics"
+//         HIVE_DB="nba_bronze"
+//         HIVE_TABLE="team_histories"
+//         CHECK_COL="teamid"
+//         TARGET_DIR="/tmp/DE011025/NBA/bronze/team_histories"
 
-        echo "Getting last ${CHECK_COL} from Hive..."
+//         echo "Getting last ${CHECK_COL} from Hive..."
 
-        LAST_VALUE=$(
-          ( hive -e "SELECT COALESCE(MAX(gamedatetimeest),0) FROM nba_bronze.team_statistics" 2>/dev/null || echo 0  | tail -n 1) | tail -n 1
-        )
+//         LAST_VALUE=$(
+//           (hive -e "SELECT COALESCE(MAX(teamid),0) FROM nba_bronze.team_histories" 2>/dev/null || echo 0  | tail -n 1)
+//         )
 
-        echo "Last imported ${CHECK_COL}: ${LAST_VALUE}"
+//         echo "Last imported ${CHECK_COL}: ${LAST_VALUE}"
 
-        sqoop import \
-          --connect jdbc:postgresql://18.134.163.221:5432/testdb \
-          --username admin \
-          --password admin123 \
-          --driver org.postgresql.Driver \
-          --query "SELECT * FROM team_statistics WHERE \\\"gameDateTimeEst\\\" > '${LAST_VALUE}' AND \\$CONDITIONS" \
-          --split-by "\"gameId\"" \
-          --target-dir ${TARGET_DIR} \
-          --fields-terminated-by ',' \
-          --as-textfile \
-          --num-mappers 1 \
-          --delete-target-dir
-        '''
-    }
-}
+//         sqoop import \
+//           --connect jdbc:postgresql://18.134.163.221:5432/testdb  \
+//           --username admin \
+//           --password admin123 \
+//           --driver org.postgresql.Driver \
+//           --query "SELECT * FROM team_histories WHERE \\\"teamId\\\" > ${LAST_VALUE} AND \\$CONDITIONS" \
+//           --split-by "\"teamId\"" \
+//           --target-dir ${TARGET_DIR} \
+//           --fields-terminated-by ',' \
+//           --as-textfile \
+//           --num-mappers 1 \
+//           --delete-target-dir
+//         '''
+//     }
+// }
+
+
+//         stage('Sqoop TeamStatistics'){
+//     steps {
+//         sh '''#!/bin/bash
+//         set -e
+
+//         HIVE_DB="nba_bronze"
+//         HIVE_TABLE="team_statistics"
+//         CHECK_COL="gameid"
+//         TARGET_DIR="/tmp/DE011025/NBA/bronze/team_statistics"
+
+//         echo "Getting last ${CHECK_COL} from Hive..."
+
+//         LAST_VALUE=$(
+//           ( hive -e "SELECT COALESCE(MAX(gamedatetimeest),0) FROM nba_bronze.team_statistics" 2>/dev/null || echo 0  | tail -n 1)
+//         )
+
+//         echo "Last imported ${CHECK_COL}: ${LAST_VALUE}"
+
+//         sqoop import \
+//           --connect jdbc:postgresql://18.134.163.221:5432/testdb \
+//           --username admin \
+//           --password admin123 \
+//           --driver org.postgresql.Driver \
+//           --query "SELECT * FROM team_statistics WHERE \\\"gameDateTimeEst\\\" > '${LAST_VALUE}' AND \\$CONDITIONS" \
+//           --split-by "\"gameId\"" \
+//           --target-dir ${TARGET_DIR} \
+//           --fields-terminated-by ',' \
+//           --as-textfile \
+//           --num-mappers 1 \
+//           --delete-target-dir
+//         '''
+//     }
+// }
 
 
         stage('Run silver Silver Players script') {
