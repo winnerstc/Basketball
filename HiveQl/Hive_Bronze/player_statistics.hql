@@ -38,4 +38,4 @@ CREATE EXTERNAL TABLE player_statistics (
 ROW FORMAT DELIMITED
 FIELDS TERMINATED BY ','
 STORED AS TEXTFILE
-LOCATION '/tmp/DE011025/NBA/bronze/PlayerStatistics';
+LOCATION '/tmp/DE011025/NBA/bronze/player_statistics';
