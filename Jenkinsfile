@@ -12,6 +12,8 @@ pipeline {
         stage('Sqoop games'){
             steps {
                 sh '''
+                #!/bin/bash
+                set -e
                 HIVE_DB="nba_bronze"
                 HIVE_TABLE="games"
                 CHECK_COL="gameId"
@@ -42,6 +44,8 @@ pipeline {
         stage('Sqoop PlayerStatistics'){
             steps {
                 sh '''
+                #!/bin/bash
+                set -e
                 HIVE_DB="nba_bronze"
                 HIVE_TABLE="player_statistics"
                 CHECK_COL="gameId"
@@ -72,6 +76,8 @@ pipeline {
         stage('Sqoop Players'){
             steps {
                 sh '''
+                #!/bin/bash
+                set -e
                 HIVE_DB="nba_bronze"
                 HIVE_TABLE="players"
                 CHECK_COL="personId"
@@ -102,6 +108,8 @@ pipeline {
         stage('Sqoop TeamHistories'){
             steps {
                 sh '''
+                #!/bin/bash
+                set -e
                 HIVE_DB="nba_bronze"
                 HIVE_TABLE="team_histories"
                 CHECK_COL="teamId"
@@ -132,6 +140,8 @@ pipeline {
         stage('Sqoop TeamStatistics'){
             steps {
                 sh '''
+                #!/bin/bash
+                set -e
                 HIVE_DB="nba_bronze"
                 HIVE_TABLE="team_statistics"
                 CHECK_COL="gameId"
