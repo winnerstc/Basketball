@@ -11,35 +11,38 @@ pipeline {
 
         stage('Sqoop games'){
             steps {
-                sh '''
-                #!/bin/bash
+                sh '''#!/bin/bash
                 set -e
+
                 HIVE_DB="nba_bronze"
                 HIVE_TABLE="games"
-                CHECK_COL="gameId"
+                CHECK_COL="gameid"
                 TARGET_DIR="/tmp/DE011025/NBA/bronze/games"
 
+                echo "Getting last ${CHECK_COL} from Hive..."
+
                 LAST_VALUE=$(
-                  ( hive -e "SELECT COALESCE(MAX(${CHECK_COL}),0) FROM ${HIVE_DB}.${HIVE_TABLE}" 2>/dev/null || echo 0 ) | tail -n 1
+                ( hive -S -e "SELECT COALESCE(MAX(${CHECK_COL}),0) FROM ${HIVE_DB}.${HIVE_TABLE}" 2>/dev/null || echo 0 ) | tail -n 1
                 )
 
                 echo "Last imported ${CHECK_COL}: ${LAST_VALUE}"
 
                 sqoop import \
-                  --connect jdbc:postgresql://18.134.163.221:5432/testdb \
-                  --username admin \
-                  --password admin123 \
-                  --table games \
-                  --target-dir ${TARGET_DIR} \
-                  --fields-terminated-by ',' \
-                  --as-textfile \
-                  --num-mappers 1 \
-                  --incremental append \
-                  --check-column ${CHECK_COL} \
-                  --last-value ${LAST_VALUE}
+                --connect jdbc:postgresql://18.134.163.221:5432/testdb \
+                --username admin \
+                --password admin123 \
+                --driver org.postgresql.Driver \
+                --query "SELECT * FROM games WHERE gameid > ${LAST_VALUE} AND \\$CONDITIONS" \
+                --split-by gameid \
+                --target-dir ${TARGET_DIR} \
+                --fields-terminated-by ',' \
+                --as-textfile \
+                --num-mappers 1 \
+                --delete-target-dir
                 '''
             }
         }
+
 
         stage('Sqoop PlayerStatistics'){
             steps {
