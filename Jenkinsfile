@@ -17,7 +17,9 @@ pipeline {
                 CHECK_COL="gameId"
                 TARGET_DIR="/tmp/DE011025/NBA/bronze/games"
 
-                LAST_VALUE=$(hive -S -e "SELECT COALESCE(MAX(${CHECK_COL}),0) FROM ${HIVE_DB}.${HIVE_TABLE};")
+                LAST_VALUE=$(
+                  ( hive -e "SELECT COALESCE(MAX(${CHECK_COL}),0) FROM ${HIVE_DB}.${HIVE_TABLE}" 2>/dev/null || echo 0 ) | tail -n 1
+                )
 
                 echo "Last imported ${CHECK_COL}: ${LAST_VALUE}"
 
@@ -45,7 +47,9 @@ pipeline {
                 CHECK_COL="gameId"
                 TARGET_DIR="/tmp/DE011025/NBA/bronze/player_statistics"
 
-                LAST_VALUE=$(hive -S -e "SELECT COALESCE(MAX(${CHECK_COL}),0) FROM ${HIVE_DB}.${HIVE_TABLE};")
+                LAST_VALUE=$(
+                  ( hive -e "SELECT COALESCE(MAX(${CHECK_COL}),0) FROM ${HIVE_DB}.${HIVE_TABLE}" 2>/dev/null || echo 0 ) | tail -n 1
+                )
 
                 echo "Last imported ${CHECK_COL}: ${LAST_VALUE}"
 
@@ -73,7 +77,9 @@ pipeline {
                 CHECK_COL="personId"
                 TARGET_DIR="/tmp/DE011025/NBA/bronze/players"
 
-                LAST_VALUE=$(hive -S -e "SELECT COALESCE(MAX(${CHECK_COL}),0) FROM ${HIVE_DB}.${HIVE_TABLE};")
+                LAST_VALUE=$(
+                  ( hive -e "SELECT COALESCE(MAX(${CHECK_COL}),0) FROM ${HIVE_DB}.${HIVE_TABLE}" 2>/dev/null || echo 0 ) | tail -n 1
+                )
 
                 echo "Last imported ${CHECK_COL}: ${LAST_VALUE}"
 
@@ -101,7 +107,9 @@ pipeline {
                 CHECK_COL="teamId"
                 TARGET_DIR="/tmp/DE011025/NBA/bronze/team_histories"
 
-                LAST_VALUE=$(hive -S -e "SELECT COALESCE(MAX(${CHECK_COL}),0) FROM ${HIVE_DB}.${HIVE_TABLE};")
+                LAST_VALUE=$(
+                  ( hive -e "SELECT COALESCE(MAX(${CHECK_COL}),0) FROM ${HIVE_DB}.${HIVE_TABLE}" 2>/dev/null || echo 0 ) | tail -n 1
+                )
 
                 echo "Last imported ${CHECK_COL}: ${LAST_VALUE}"
 
@@ -129,7 +137,9 @@ pipeline {
                 CHECK_COL="gameId"
                 TARGET_DIR="/tmp/DE011025/NBA/bronze/team_statistics"
 
-                LAST_VALUE=$(hive -S -e "SELECT COALESCE(MAX(${CHECK_COL}),0) FROM ${HIVE_DB}.${HIVE_TABLE};")
+                LAST_VALUE=$(
+                  ( hive -e "SELECT COALESCE(MAX(${CHECK_COL}),0) FROM ${HIVE_DB}.${HIVE_TABLE}" 2>/dev/null || echo 0 ) | tail -n 1
+                )
 
                 echo "Last imported ${CHECK_COL}: ${LAST_VALUE}"
 
