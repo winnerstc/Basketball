@@ -38,7 +38,7 @@ pipeline {
             --username admin \
             --password admin123 \
             --driver org.postgresql.Driver \
-            --query "SELECT * FROM games WHERE \\\"gameId\\\" > ${LAST_VALUE} AND \\$CONDITIONS" \
+            --query "SELECT * FROM games WHERE \\\"gameDateTimeEst\\\" > ${LAST_VALUE} AND \\$CONDITIONS" \
             --split-by "\"gameId\"" \
             --target-dir ${TARGET_DIR} \
             --fields-terminated-by ',' \
@@ -66,7 +66,7 @@ pipeline {
             echo "Getting last ${CHECK_COL} from Hive..."
 
             LAST_VALUE=$(
-            ( hive -S -e "SELECT COALESCE(MAX(${CHECK_COL}),0) FROM ${HIVE_DB}.${HIVE_TABLE}" 2>/dev/null || echo 0 ) | tail -n 1
+            ( hive -e "SELECT COALESCE(MAX(gamedatetimeest),0) FROM nba_bronze.player_statistics" 2>/dev/null || echo 0  | tail -n 1)
             )
 
             echo "Last imported ${CHECK_COL}: ${LAST_VALUE}"
@@ -76,7 +76,7 @@ pipeline {
             --username admin \
             --password admin123 \
             --driver org.postgresql.Driver \
-            --query "SELECT * FROM player_statistics WHERE \\\"gameId\\\" > ${LAST_VALUE} AND \\$CONDITIONS" \
+            --query "SELECT * FROM player_statistics WHERE \\\"gameDateTimeEst\\\" > ${LAST_VALUE} AND \\$CONDITIONS" \
             --split-by "\"gameId\"" \
             --target-dir ${TARGET_DIR} \
             --fields-terminated-by ',' \
@@ -101,7 +101,7 @@ pipeline {
             echo "Getting last ${CHECK_COL} from Hive..."
 
             LAST_VALUE=$(
-            ( hive -S -e "SELECT COALESCE(MAX(${CHECK_COL}),0) FROM ${HIVE_DB}.${HIVE_TABLE}" 2>/dev/null || echo 0 ) | tail -n 1
+            ( hive -e "SELECT COALESCE(MAX(personid),0) FROM nba_bronze.players" 2>/dev/null || echo 0  | tail -n 1)
             )
 
             echo "Last imported ${CHECK_COL}: ${LAST_VALUE}"
@@ -136,7 +136,7 @@ pipeline {
         echo "Getting last ${CHECK_COL} from Hive..."
 
         LAST_VALUE=$(
-          ( hive -S -e "SELECT COALESCE(MAX(${CHECK_COL}),0) FROM ${HIVE_DB}.${HIVE_TABLE}" 2>/dev/null || echo 0 ) | tail -n 1
+          (hive -e "SELECT COALESCE(MAX(teamid),0) FROM nba_bronze.team_histories" 2>/dev/null || echo 0  | tail -n 1)
         )
 
         echo "Last imported ${CHECK_COL}: ${LAST_VALUE}"
@@ -171,7 +171,7 @@ pipeline {
         echo "Getting last ${CHECK_COL} from Hive..."
 
         LAST_VALUE=$(
-          ( hive -S -e "SELECT COALESCE(MAX(${CHECK_COL}),0) FROM ${HIVE_DB}.${HIVE_TABLE}" 2>/dev/null || echo 0 ) | tail -n 1
+          ( hive -e "SELECT COALESCE(MAX(gamedatetimeest),0) FROM nba_bronze.team_statistics" 2>/dev/null || echo 0  | tail -n 1) | tail -n 1
         )
 
         echo "Last imported ${CHECK_COL}: ${LAST_VALUE}"
@@ -181,7 +181,7 @@ pipeline {
           --username admin \
           --password admin123 \
           --driver org.postgresql.Driver \
-          --query "SELECT * FROM team_statistics WHERE \\\"gameId\\\" > ${LAST_VALUE} AND \\$CONDITIONS" \
+          --query "SELECT * FROM team_statistics WHERE \\\"gameDateTimeEst\\\" > ${LAST_VALUE} AND \\$CONDITIONS" \
           --split-by "\"gameId\"" \
           --target-dir ${TARGET_DIR} \
           --fields-terminated-by ',' \
