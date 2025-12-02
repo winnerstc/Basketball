@@ -1,158 +1,128 @@
 # coding: utf-8
-import os
-
-# FORCE PYTHON 3.6 (CDH default)
-os.environ["PYSPARK_PYTHON"] = "/usr/bin/python3"
-os.environ["PYSPARK_DRIVER_PYTHON"] = "/usr/bin/python3"
 
 from pyspark.sql import SparkSession
-from pyspark.sql.functions import (
-    col, year, month, dayofmonth, quarter, weekofyear,
-    date_format, lit, sequence, explode, to_date, when,
-    row_number
-)
-from pyspark.sql.window import Window
+from pyspark.sql.functions import *
+from pyspark.sql.types import *
 
-# ======================================================
-# Spark Session
-# ======================================================
-spark = SparkSession.builder.appName("NBA_Gold_Model").getOrCreate()
+spark = SparkSession.builder.appName("silver_to_gold_nba").getOrCreate()
 
-# ======================================================
-# Paths
-# ======================================================
-silver_games = "/tmp/DE011025/NBA/silver/games"
-silver_players = "/tmp/DE011025/NBA/silver/player_statistics"
-silver_player_dim = "/tmp/DE011025/NBA/silver/players"
-silver_teams = "/tmp/DE011025/NBA/silver/team_histories"
-silver_team_stats = "/tmp/DE011025/NBA/silver/team_statistics"
+# ----------------------------------------------------------
+# HDFS Silver Paths
+# ----------------------------------------------------------
+games_path = "/tmp/DE011025/NBA/silver/games"
+players_path = "/tmp/DE011025/NBA/silver/players"
+player_stats_path = "/tmp/DE011025/NBA/silver/player_statistics"
+team_histories_path = "/tmp/DE011025/NBA/silver/team_histories"
+team_stats_path = "/tmp/DE011025/NBA/silver/team_statistics"
 
-gold_fact = "/tmp/DE011025/NBA/gold/fact_nba_stats"
-gold_dim_games = "/tmp/DE011025/NBA/gold/dim_games"
-gold_dim_players = "/tmp/DE011025/NBA/gold/dim_players"
-gold_dim_teams = "/tmp/DE011025/NBA/gold/dim_teams"
-gold_dim_date = "/tmp/DE011025/NBA/gold/dim_dates"
+# ----------------------------------------------------------
+# HDFS Gold Paths
+# ----------------------------------------------------------
+fact_path = "/tmp/DE011025/NBA/gold/fact_nba_stats"
+dim_players_path = "/tmp/DE011025/NBA/gold/dim_players"
+dim_teams_path = "/tmp/DE011025/NBA/gold/dim_teams"
+dim_games_path = "/tmp/DE011025/NBA/gold/dim_games"
+dim_dates_path = "/tmp/DE011025/NBA/gold/dim_dates"
 
-# ======================================================
-# Load Silver Parquet Files
-# ======================================================
-df_games = spark.read.parquet(silver_games)
-df_player_stats = spark.read.parquet(silver_players)
-df_players = spark.read.parquet(silver_player_dim)
-df_teams = spark.read.parquet(silver_teams)
-df_team_stats = spark.read.parquet(silver_team_stats)
+# ----------------------------------------------------------
+# READ SILVER TABLES
+# ----------------------------------------------------------
+games = spark.read.parquet(games_path)
+players = spark.read.parquet(players_path)
+player_stats = spark.read.parquet(player_stats_path)
+team_histories = spark.read.parquet(team_histories_path)
+team_stats = spark.read.parquet(team_stats_path)
 
-# Ensure bigint for joins
-df_games = df_games.withColumn("gameid", col("gameid").cast("bigint"))
-df_player_stats = df_player_stats.withColumn("gameid", col("gameid").cast("bigint"))
-df_team_stats = df_team_stats.withColumn("gameid", col("gameid").cast("bigint"))
+# ----------------------------------------------------------
+# DIMENSIONS
+# ----------------------------------------------------------
 
-# ======================================================
-# DIMENSION: GAMES
-# ======================================================
-dim_games = df_games.select(
-    "gameid", "game_date", "game_year", "game_month",
-    "hometeamcity", "hometeamname", "hometeamid",
-    "awayteamcity", "awayteamname", "awayteamid",
-    "gametype", "attendance", "arenaid"
-)
-
-dim_games.write.mode("overwrite").parquet(gold_dim_games)
-
-# ======================================================
-# DIMENSION: PLAYERS
-# ======================================================
-dim_players = df_players.select(
+# DIM PLAYERS
+dim_players = players.select(
     "personid", "firstname", "lastname",
-    "birth_year", "age_years",
-    "primary_position", "country"
+    "country", "height", "bodyweight",
+    "age_years", "primary_position"
 )
+dim_players.write.mode("overwrite").parquet(dim_players_path)
 
-dim_players.write.mode("overwrite").parquet(gold_dim_players)
-
-# ======================================================
-# DIMENSION: TEAMS
-# ======================================================
-dim_teams = df_teams.select(
-    "teamid", "teamcity", "teamname", "teamabbrev",
-    "league", "team_full_name", "active_flag"
+# DIM TEAMS
+dim_teams = team_histories.select(
+    "teamid", "teamname", "teamcity",
+    "team_full_name", "league"
 )
+dim_teams.write.mode("overwrite").parquet(dim_teams_path)
 
-dim_teams.write.mode("overwrite").parquet(gold_dim_teams)
-
-# ======================================================
-# DIMENSION: DATE
-# ======================================================
-min_date = df_games.agg({"game_date": "min"}).collect()[0][0]
-max_date = df_games.agg({"game_date": "max"}).collect()[0][0]
-
-date_range = spark.createDataFrame([(min_date, max_date)], ["start", "end"]) \
-    .select(explode(sequence(col("start"), col("end"))).alias("date"))
-
-dim_dates = (
-    date_range
-        .withColumn("day", dayofmonth(col("date")))
-        .withColumn("month", month(col("date")))
-        .withColumn("year", year(col("date")))
-        .withColumn("quarter", quarter(col("date")))
-        .withColumn("week", weekofyear(col("date")))
-        .withColumn("day_name", date_format(col("date"), "EEEE"))
-        .withColumn("month_name", date_format(col("date"), "MMMM"))
+# DIM GAMES
+dim_games = games.select(
+    "gameid", "gametype", "attendance",
+    "arenaid", "home_win", "away_win",
+    "homescore", "awayscore", "winner"
 )
+dim_games.write.mode("overwrite").parquet(dim_games_path)
 
-dim_dates.write.mode("overwrite").parquet(gold_dim_date)
-
-# ======================================================
-# FIX: DEDUP TEAM STATS (ONE ROW PER GAMEID)
-# ======================================================
-window_game = Window.partitionBy("gameid").orderBy(col("teamid"))
-
-df_team_stats_clean = (
-    df_team_stats
-        .withColumn("rn", row_number().over(window_game))
-        .filter(col("rn") == 1)
-        .drop("rn")
+# DIM DATES
+dim_dates = games.select(
+    "game_date",
+    "game_year",
+    "game_month",
+    weekofyear("game_date").alias("week"),
+    quarter("game_date").alias("quarter_of_year")
 )
+dim_dates.write.mode("overwrite").parquet(dim_dates_path)
 
-# ======================================================
-# FACT TABLE (NO DUPLICATES)
-# ======================================================
+# ----------------------------------------------------------
+# FACT TABLE
+# ----------------------------------------------------------
+
+# Join 1: player stats + team stats (teamid + gameid)
 fact = (
-    df_player_stats.alias("ps")
-        .join(df_games.alias("g"), ["gameid"], "inner")
-        .join(df_team_stats_clean.alias("ts"), ["gameid"], "left")
-        .select(
-            col("ps.gameid"),
-            col("ps.personid"),
-            col("ps.playerteamname").alias("teamname"),
-            col("ps.playerteamcity").alias("teamcity"),
-            col("ps.opponentteamname").alias("opponentteamname"),
-            col("ps.opponentteamcity").alias("opponentteamcity"),
-            col("g.game_date"),
-            col("g.game_year"),
-            col("g.game_month"),
-            col("ps.home"),
-            col("ps.win"),
-            col("ps.points"),
-            col("ps.assists"),
-            col("ps.reboundstotal").alias("rebounds"),
-            col("ps.steals"),
-            col("ps.blocks"),
-            col("ps.numminutes"),
-            col("ts.q1points"),
-            col("ts.q4points"),
-            col("ts.benchpoints"),
-            col("ts.biggestlead"),
-            col("ts.biggestscoringrun"),
-            col("ts.leadchanges"),
-            col("ts.score_diff"),
-            col("ts.shooting_efficiency"),
-            col("ps.fieldgoalspercentage"),
-            col("ps.threepointerspercentage"),
-            col("ps.freethrowspercentage")
-        )
+    player_stats.alias("ps")
+    .join(team_stats.alias("ts"),
+          (col("ps.gameid") == col("ts.gameid")) &
+          (col("ps.playerteamname") == col("ts.teamname")),
+          "left")
+    .join(games.alias("g"), "gameid", "left")
+    .select(
+        # Keys
+        col("ps.gameid"),
+        col("ps.personid"),
+        col("ps.playerteamname").alias("teamname"),
+        col("ps.playerteamcity").alias("teamcity"),
+        col("ps.opponentteamname"),
+        col("ps.opponentteamcity"),
+
+        # Date
+        col("ps.game_date"),
+        col("ps.game_year"),
+        col("ps.game_month"),
+
+        # Basic KPIs
+        col("ps.home"),
+        col("ps.win"),
+        col("ps.points"),
+        col("ps.assists"),
+        (col("ps.reboundsoffensive") + col("ps.reboundsdefensive")).alias("rebounds"),
+        col("ps.steals"),
+        col("ps.blocks"),
+        col("ps.numminutes"),
+
+        # Team stats KPIs
+        col("ts.q1points"),
+        col("ts.q4points"),
+        col("ts.benchpoints"),
+        col("ts.biggestlead"),
+        col("ts.biggestscoringrun"),
+        col("ts.leadchanges"),
+        col("ts.score_diff"),
+        col("ts.shooting_efficiency"),
+
+        # Player shooting percentages
+        col("ps.fieldgoalspercentage"),
+        col("ps.threepointerspercentage"),
+        col("ps.freethrowspercentage")
+    )
 )
 
-fact.write.mode("overwrite").parquet(gold_fact)
+fact.write.mode("overwrite").parquet(fact_path)
 
-print(" GOLD Layer successfully created! (Duplicates removed, Fact table cleaned)")
+print("SILVER → GOLD Load Complete!")
