@@ -78,19 +78,16 @@ pipeline {
                 echo "============================"
 
                 sqoop import \
-                    --connect jdbc:postgresql://18.134.163.221:5432/testdb \
-                    --username admin \
-                    --password admin123 \
-                    --driver org.postgresql.Driver \
-                    --table games \
-                    --incremental lastmodified \
-                    --check-column "gameDateTimeEst" \
-                    --last-value "${LAST_VALUE}" \
-                    --fields-terminated-by ',' \
-                    --as-textfile \
-                    --num-mappers 1 \
-                    --target-dir "/tmp/DE011025/NBA/bronze/games" \
-                    --append
+                --connect jdbc:postgresql://18.134.163.221:5432/testdb \
+                --username admin \
+                --password admin123 \
+                --driver org.postgresql.Driver \
+                --query "SELECT * FROM games WHERE \\\"gameDateTimeEst\\\" > '${LAST_VALUE}' AND \\$CONDITIONS" \
+                --target-dir /tmp/DE011025/NBA/bronze/games \
+                --fields-terminated-by ',' \
+                --as-textfile \
+                --num-mappers 1 \
+                --append
 
                 echo "============================"
                 echo "   SQOOP INCREMENTAL DONE   "
