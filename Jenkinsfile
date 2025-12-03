@@ -195,6 +195,7 @@ pipeline {
             steps {
                 sh '''
                   echo "Executing Test Cases"
+                  pip install pytest
                   pytest
                 '''
             }
