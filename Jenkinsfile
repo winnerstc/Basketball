@@ -1,6 +1,5 @@
 pipeline {
     agent any  // or { label 'hadoop-edge' } if you have a specific node
-//
     stages {
         stage('Checkout') {
             steps {
@@ -192,60 +191,68 @@ pipeline {
 //     }
 // }
 
-
-        stage('Run silver Silver Players script') {
+        stage('Run Test Cases') {
             steps {
                 sh '''
-                  echo "Running silver cleaning script..."
-                  spark-submit silver_players.py
+                  echo "Executing Test Cases"
+                  pytest
                 '''
             }
         }
 
-        stage('Run silver Silver Games script') {
-            steps {
-                sh '''
-                  echo "Running silver cleaning script..."
-                  spark-submit silver_games.py
-                '''
-            }
-        }
+        // stage('Run silver Silver Players script') {
+        //     steps {
+        //         sh '''
+        //           echo "Running silver cleaning script..."
+        //           spark-submit silver_players.py
+        //         '''
+        //     }
+        // }
 
-        stage('Run silver Player Stats script') {
-            steps {
-                sh '''
-                  echo "Running silver cleaning script..."
-                  spark-submit silver_playerstats.py
-                '''
-            }
-        }
+        // stage('Run silver Silver Games script') {
+        //     steps {
+        //         sh '''
+        //           echo "Running silver cleaning script..."
+        //           spark-submit silver_games.py
+        //         '''
+        //     }
+        // }
 
-        stage('Run silver Team Histories script') {
-            steps {
-                sh '''
-                  echo "Running silver cleaning script..."
-                  spark-submit silver_teamhistories.py
-                '''
-            }
-        }
+        // stage('Run silver Player Stats script') {
+        //     steps {
+        //         sh '''
+        //           echo "Running silver cleaning script..."
+        //           spark-submit silver_playerstats.py
+        //         '''
+        //     }
+        // }
 
-        stage('Run silver Team Statistics script') {
-            steps {
-                sh '''
-                  echo "Running silver cleaning script..."
-                  spark-submit silver_teamstatistics.py
-                '''
-            }
-        }
+        // stage('Run silver Team Histories script') {
+        //     steps {
+        //         sh '''
+        //           echo "Running silver cleaning script..."
+        //           spark-submit silver_teamhistories.py
+        //         '''
+        //     }
+        // }
 
-        stage('Run gold script') {
-            steps {
-                sh '''
-                  echo "Running gold script..."
-                  spark-submit silver-to-gold.py
-                '''
-            }
-        }
+        // stage('Run silver Team Statistics script') {
+        //     steps {
+        //         sh '''
+        //           echo "Running silver cleaning script..."
+        //           spark-submit silver_teamstatistics.py
+        //         '''
+        //     }
+        // }
+
+        // stage('Run gold script') {
+        //     steps {
+        //         sh '''
+        //           echo "Running gold script..."
+        //           spark-submit silver-to-gold.py
+        //         '''
+        //     }
+        // }
     }
 
     post {
