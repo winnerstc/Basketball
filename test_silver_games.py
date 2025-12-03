@@ -3,30 +3,31 @@ import pytest
 from pyspark.sql.types import StructType, StructField, StringType, LongType, IntegerType
 from pyspark.sql.functions import col
 
-# Assuming transform_games_data is in nba_etl_logic.py
+# Assuming transform_games_data is in silver_games.py
 from silver_games import transform_games_data 
 
 ### --- SCHEMA DEFINITION MATCHING BRONZE DDL --- ###
 # Note: winner and arenaId are defined as INT and BIGINT respectively in the Bronze DDL.
 test_schema = StructType([
-    StructField("gameId", LongType(), True),
-    StructField("gameDateTimeEst", StringType(), True),
-    StructField("hometeamCity", StringType(), True),
-    StructField("hometeamName", StringType(), True),
-    StructField("hometeamId", LongType(), True),
-    StructField("awayteamCity", StringType(), True),
-    StructField("awayteamName", StringType(), True),
-    StructField("awayteamId", LongType(), True),
-    StructField("homeScore", IntegerType(), True),
-    StructField("awayScore", IntegerType(), True),
+    StructField("gameid", LongType(), True),
+    StructField("gamedatetimeest", StringType(), True),
+    StructField("hometeamcity", StringType(), True),
+    StructField("hometeamname", StringType(), True),
+    StructField("hometeamid", LongType(), True),
+    StructField("awayteamcity", StringType(), True),
+    StructField("awayteamname", StringType(), True),
+    StructField("awayteamid", LongType(), True),
+    StructField("homescore", IntegerType(), True),
+    StructField("awayscore", IntegerType(), True),
     StructField("winner", IntegerType(), True),
-    StructField("gameType", StringType(), True),
+    StructField("gametype", StringType(), True),
     StructField("attendance", IntegerType(), True),
-    StructField("arenaId", LongType(), True),
-    StructField("gameLabel", StringType(), True),
-    StructField("gameSubLabel", StringType(), True),
-    StructField("seriesGameNumber", IntegerType(), True)
+    StructField("arenaid", LongType(), True),
+    StructField("gamelabel", StringType(), True),
+    StructField("gamesublabel", StringType(), True),
+    StructField("seriesgamenumber", IntegerType(), True)
 ])
+
 
 # Utility function to create a basic DataFrame
 def create_test_df(spark_session, data):
@@ -39,9 +40,14 @@ def test_null_replacement_and_timestamp_parsing(spark_session):
     """Tests steps 2 (null replacement) and 4 (timestamp parsing)."""
     # 17 columns in total
     data = [
-        # gameId, gameDateTimeEst, hometeamCity, hometeamName, hometeamId, awayteamCity, awayteamName, awayteamId, homeScore, awayScore, winner, gameType, attendance, arenaId, gameLabel, gameSubLabel, seriesGameNumber
-        (1, "2023-01-01 10:00:00", "CityA", "nul", 100, "CityB", "NULL", 200, 100, 90, 100, "REG", 15000, 1, "Label1", "Sub1", 1),
-        (2, "Invalid-Time", "CityC", "NA", 300, "CityD", "", 400, 110, 120, 400, "PLAYOFFS", 20000, 2, "Label2", "Sub2", 1),
+        # gameId, gameDateTimeEst, hometeamCity, hometeamName, hometeamId,
+        # awayteamCity, awayteamName, awayteamId, homeScore, awayScore,
+        # winner, gameType, attendance, arenaId, gameLabel, gameSubLabel,
+        # seriesGameNumber
+        (1, "2023-01-01 10:00:00", "CityA", "nul", 100,
+         "CityB", "NULL", 200, 100, 90, 100, "REG", 15000, 1, "Label1", "Sub1", 1),
+        (2, "Invalid-Time", "CityC", "NA", 300,
+         "CityD", "", 400, 110, 120, 400, "PLAYOFFS", 20000, 2, "Label2", "Sub2", 1),
     ]
     df_raw = create_test_df(spark_session, data)
     df_silver, _ = transform_games_data(df_raw)
@@ -51,14 +57,12 @@ def test_null_replacement_and_timestamp_parsing(spark_session):
 
     # Row 1 Checks (nulls replaced, timestamp parsed)
     # Note: 'nul' -> NULL replacement happens before upper casing in the logic, resulting in None
-    assert row1["hometeamName"] is None 
-    assert row1["awayteamName"] is None 
+    assert row1["hometeamname"] is None      # << lowercase
+    assert row1["awayteamname"] is None      # << lowercase
     assert str(row1["game_ts"]).startswith("2023-01-01 10:00:00")
     assert row1["game_year"] == 2023
     
-    # Row 2 Check (invalid timestamp is handled, leading to missing keys if gameid is null)
-    # The row should be filtered out because the invalid timestamp makes game_ts NULL, and subsequently game_year NULL (failing quality step 9)
-    # However, since the critical IDs (gameId, hometeamId, awayteamId, arenaId) are present, it passes Step 5 (quarantine) but fails Step 9 (quality).
+    # Row 2 should be filtered out after quality checks
     assert df_silver.filter(col("gameid") == 2).count() == 0 
 
 
@@ -103,9 +107,9 @@ def test_trimming_and_casing(spark_session):
     assert row["awayteamcity"] == "NY"
     
     # Check casing (step 7)
-    assert row["hometeamname"] == " LAKERS " # Name columns are only uppered, not trimmed
+    assert row["hometeamname"] == " LAKERS "  # Name columns only uppered, not trimmed
     assert row["awayteamname"] == " KNICKS "
-    assert row["gametype"] == "REG" # Trimmed then uppered
+    assert row["gametype"] == "REG"  # Trimmed then uppered
 
 
 def test_derived_metrics(spark_session):
@@ -143,17 +147,16 @@ def test_derived_metrics(spark_session):
 def test_numeric_quality_filters(spark_session):
     """Tests step 9 (numeric quality filters)."""
     data = [
-        (1, "2023-01-01", "C", "N", 1, "C", "N", 2, 100, 90, 1, "REG", 15000, 1, "L", "S", 1), # Good
-        (2, "2023-01-02", "C", "N", 3, "C", "N", 4, -10, 90, 1, "REG", 15000, 1, "L", "S", 1), # Bad: negative homescore
-        (3, "2023-01-03", "C", "N", 5, "C", "N", 6, 100, 90, 1, "REG", 35000, 1, "L", "S", 1), # Bad: attendance too high
-        (4, "2023-01-04", "C", "N", 7, "C", "N", 8, 100, 90, 1, "REG", 15000, 1, "L", "S", 1900), # Bad: game_year too low (using 1900 for seriesGameNumber, which isn't game_year) 
-        (5, "1900-01-04", "C", "N", 9, "C", "N", 10, 100, 90, 1, "REG", 15000, 1, "L", "S", 1), # Bad: game_year too low (1900 < 1946)
+        (1, "2023-01-01", "C", "N", 1, "C", "N", 2, 100, 90, 1, "REG", 15000, 1, "L", "S", 1),  # Good
+        (2, "2023-01-02", "C", "N", 3, "C", "N", 4, -10, 90, 1, "REG", 15000, 1, "L", "S", 1),  # Bad: negative homescore
+        (3, "2023-01-03", "C", "N", 5, "C", "N", 6, 100, 90, 1, "REG", 35000, 1, "L", "S", 1),  # Bad: attendance too high
+        (4, "2023-01-04", "C", "N", 7, "C", "N", 8, 100, 90, 1, "REG", 15000, 1, "L", "S", 1900),  # passes; year logic is separate
+        (5, "1900-01-04", "C", "N", 9, "C", "N", 10, 100, 90, 1, "REG", 15000, 1, "L", "S", 1),  # Bad: game_year too low
     ]
     df_raw = create_test_df(spark_session, data)
     df_silver, _ = transform_games_data(df_raw)
 
     # Only rows 1 (Good) and 4 (Bad value in an unused column) should pass.
-    # Row 5 fails the game_year filter. Row 2 and 3 fail score/attendance filters.
     assert df_silver.count() == 2
     assert df_silver.filter(col("gameid") == 1).count() == 1
     assert df_silver.filter(col("gameid") == 4).count() == 1
@@ -164,8 +167,8 @@ def test_deduplication(spark_session):
     """Tests step 10 (deduplication by latest timestamp)."""
     data = [
         # Duplicate gameId 1, keep latest (second record)
-        (1, "2023-01-01 10:00:00", "C", "N", 1, "C", "N", 2, 100, 90, 1, "REG", 10000, 1, "L", "S", 1), # Old record (should be dropped)
-        (1, "2023-01-01 11:00:00", "C", "N", 1, "C", "N", 2, 105, 95, 1, "REG", 10000, 1, "L", "S", 1), # New record (should be kept)
+        (1, "2023-01-01 10:00:00", "C", "N", 1, "C", "N", 2, 100, 90, 1, "REG", 10000, 1, "L", "S", 1),  # Old record
+        (1, "2023-01-01 11:00:00", "C", "N", 1, "C", "N", 2, 105, 95, 1, "REG", 10000, 1, "L", "S", 1),  # New record
         # Unique gameId 2
         (2, "2023-01-02 10:00:00", "C", "N", 3, "C", "N", 4, 120, 110, 3, "REG", 10000, 2, "L", "S", 1), 
     ]
