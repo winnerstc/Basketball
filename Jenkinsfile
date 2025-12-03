@@ -1,5 +1,9 @@
 pipeline {
-    agent any  // or { label 'hadoop-edge' } if you have a specific node
+    agent any 
+     // or { label 'hadoop-edge' } if you have a specific node
+    environment {
+            VENV = 'unit_testing_bd'
+    }
     stages {
         stage('Checkout') {
             steps {
@@ -191,11 +195,9 @@ pipeline {
 //     }
 // }
 
-         environment {
-            VENV = 'unit_testing_bd'
-        }
+       
 
-         stage('Setup Python Environment') {
+        stage('Setup Python Environment') {
             steps {
                 sh '''
                 python3 -m venv ${VENV}
