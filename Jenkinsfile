@@ -53,14 +53,13 @@ pipeline {
 //             }
 
 //         }
-
-        stage('Sqoop Incremental Using HDFS') {
+        stage('Sqoop Incremental Using HDFS (Timestamp)') {
             steps {
                 sh '''#!/bin/bash
                 set -e
 
                 echo "============================"
-                echo "  READ TIMESTAMP FROM HDFS  "
+                echo "  READ LAST TIMESTAMP FROM HDFS"
                 echo "============================"
 
                 LAST_VALUE=$(hdfs dfs -cat /tmp/DE011025/NBA/bronze/games/part* \
@@ -68,10 +67,10 @@ pipeline {
                     | sort \
                     | tail -n 1)
 
-                echo "LAST VALUE FROM BRONZE = ${LAST_VALUE}"
+                echo "LAST TIMESTAMP FROM BRONZE = ${LAST_VALUE}"
 
                 echo "============================"
-                echo "     RUN SQOOP IMPORT       "
+                echo "        RUN SQOOP IMPORT     "
                 echo "============================"
 
                 sqoop import \
@@ -79,23 +78,20 @@ pipeline {
                     --username admin \
                     --password admin123 \
                     --driver org.postgresql.Driver \
-                    --table games \
-                    --incremental lastmodified \
-                    --check-column "gameDateTimeEst" \
-                    --last-value "${LAST_VALUE}" \
+                    --query "SELECT * FROM games WHERE \\\"gameDateTimeEst\\\" > '${LAST_VALUE}' AND \\$CONDITIONS" \
+                    --split-by "gameId" \
+                    --target-dir "/tmp/DE011025/NBA/bronze/games" \
                     --fields-terminated-by ',' \
                     --as-textfile \
                     --num-mappers 1 \
-                    --target-dir "/tmp/DE011025/NBA/bronze/games" \
                     --append
 
                 echo "============================"
-                echo "   SQOOP INCREMENTAL DONE   "
+                echo "   SQOOP TIMESTAMP INCREMENTAL DONE"
                 echo "============================"
                 '''
             }
         }
-
 
 
 //         stage('Sqoop PlayerStatistics'){
