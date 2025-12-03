@@ -292,7 +292,7 @@ pipeline {
     //         }
     //     }
     // }
-
+    }
     post {
         success {
             echo "Build & silver cleaning succeeded."
@@ -301,5 +301,5 @@ pipeline {
             echo "Build FAILED – check logs."
         }
     }
-    }
+    
 }
