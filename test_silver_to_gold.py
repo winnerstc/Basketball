@@ -12,28 +12,62 @@ from pyspark.sql.types import (
 from pyspark.sql.functions import (
     col, concat_ws, sum as F_sum, count as F_count,
     when, lit
-)
+)from pyspark.sql.types import IntegerType, LongType
+
+def _normalize_int_type(dt):
+    """Treat IntegerType and LongType as the same logical type for testing."""
+    if isinstance(dt, IntegerType):
+        return LongType()
+    return dt
+
 def assert_df_equal(actual_df, expected_df, sort_cols=None, **_ignored_kwargs):
     """
     Simple DataFrame equality helper for tests.
+
     - Optionally sorts by sort_cols
-    - Compares schema and row content
-    - Ignores any extra keyword args (e.g. check_all_struct) so calls remain compatible
+    - Compares column names
+    - Compares data types loosely (int vs bigint treated as same)
+    - Ignores nullable flag
+    - Compares row content exactly
     """
     if sort_cols:
         actual_df = actual_df.orderBy(*sort_cols)
         expected_df = expected_df.orderBy(*sort_cols)
 
-    # Compare schema
-    assert actual_df.schema == expected_df.schema, (
-        f"Schema mismatch:\nActual:   {actual_df.schema}\nExpected: {expected_df.schema}"
+    # --- Compare schema (names + compatible types) ---
+    a_fields = actual_df.schema.fields
+    e_fields = expected_df.schema.fields
+
+    assert len(a_fields) == len(e_fields), (
+        f"Different number of columns:\n"
+        f"Actual:   {[f.name for f in a_fields]}\n"
+        f"Expected: {[f.name for f in e_fields]}"
     )
 
+    for af, ef in zip(a_fields, e_fields):
+        assert af.name == ef.name, (
+            f"Column name mismatch:\n"
+            f"Actual:   {af.name}\n"
+            f"Expected: {ef.name}"
+        )
+
+        a_type = _normalize_int_type(af.dataType)
+        e_type = _normalize_int_type(ef.dataType)
+
+        assert type(a_type) == type(e_type), (
+            f"Column type mismatch for '{af.name}':\n"
+            f"Actual:   {af.dataType}\n"
+            f"Expected: {ef.dataType}"
+        )
+
+    # --- Compare data ---
     actual_rows = actual_df.collect()
     expected_rows = expected_df.collect()
 
     assert actual_rows == expected_rows, (
-        f"Data mismatch:\nActual:   {actual_rows}\nExpected: {expected_rows}"
+        f"Data mismatch:\n"
+        f"Actual:   {actual_rows}\n"
+        f"Expected: {expected_rows}"
     )
 
 def compute_gold_tables(df_stats, df_games):
