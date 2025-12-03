@@ -7,13 +7,35 @@ from pyspark.sql.types import (
 # Note: assert_df_equal is typically available in pyspark.testing
 # In some environments, it might be part of an older or external module, 
 # but for modern PySpark, the import below is correct.
-from pyspark.testing import assert_df_equal 
 
 # --- Start of the actual code block for the user's function for testing ---
 from pyspark.sql.functions import (
     col, concat_ws, sum as F_sum, count as F_count,
     when, lit
 )
+
+def assert_df_equal(actual_df, expected_df, sort_cols=None):
+    """
+    Simple DataFrame equality helper for tests.
+    - Optionally sorts by sort_cols
+    - Compares schema and row content
+    """
+    if sort_cols:
+        actual_df = actual_df.orderBy(*sort_cols)
+        expected_df = expected_df.orderBy(*sort_cols)
+
+    # Compare schema (field names + types)
+    assert actual_df.schema == expected_df.schema, (
+        f"Schema mismatch:\nActual:   {actual_df.schema}\nExpected: {expected_df.schema}"
+    )
+
+    actual_rows = actual_df.collect()
+    expected_rows = expected_df.collect()
+
+    assert actual_rows == expected_rows, (
+        f"Data mismatch:\nActual:   {actual_rows}\nExpected: {expected_rows}"
+    )
+
 
 def compute_gold_tables(df_stats, df_games):
     """
