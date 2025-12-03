@@ -9,10 +9,12 @@ from pyspark.sql.types import (
 # but for modern PySpark, the import below is correct.
 
 # --- Start of the actual code block for the user's function for testing ---
+from pyspark.sql import SparkSession
 from pyspark.sql.functions import (
     col, concat_ws, sum as F_sum, count as F_count,
     when, lit
-)from pyspark.sql.types import IntegerType, LongType
+)
+from pyspark.sql.types import IntegerType, LongType, DoubleType
 
 def _normalize_int_type(dt):
     """Treat IntegerType and LongType as the same logical type for testing."""
