@@ -191,15 +191,30 @@ pipeline {
 //     }
 // }
 
-        stage('Run Test Cases') {
+         environment {
+            VENV = 'unit_testing_bd'
+        }
+
+         stage('Setup Python Environment') {
             steps {
                 sh '''
-                  echo "Executing Test Cases"
-                  pip install pytest
-                  pytest
+                python3 -m venv ${VENV}
+                source ${VENV}/bin/activate
+                pip install --upgrade pip
+                pip install -r requirements.txt
                 '''
             }
         }
+
+        stage('Run Unit Tests') {
+        steps {
+            sh '''
+            source ${VENV}/bin/activate
+            pytest --junitxml=pytest.xml
+            '''
+        }
+        }
+        
 
         // stage('Run silver Silver Players script') {
         //     steps {
