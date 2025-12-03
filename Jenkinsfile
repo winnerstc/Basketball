@@ -54,41 +54,41 @@ pipeline {
 
 //         }
 
-stage('Sqoop Incremental Using HDFS') {
-    steps {
-        sh '''
-        echo "============================"
-        echo "  READ TIMESTAMP FROM HDFS  "
-        echo "============================"
+        stage('Sqoop Incremental Using HDFS') {
+            steps {
+                sh '''
+                echo "============================"
+                echo "  READ TIMESTAMP FROM HDFS  "
+                echo "============================"
 
-        LAST_VALUE=$(hdfs dfs -cat /tmp/DE011025/NBA/bronze/games/part* \
-            | cut -d',' -f2 \
-            | sort \
-            | tail -n 1)
+                LAST_VALUE=$(hdfs dfs -cat /tmp/DE011025/NBA/bronze/games/part* \
+                    | cut -d',' -f2 \
+                    | sort \
+                    | tail -n 1)
 
-        echo "LAST VALUE FROM BRONZE = $LAST_VALUE"
+                echo "LAST VALUE FROM BRONZE = $LAST_VALUE"
 
-        echo "============================"
-        echo "     RUN SQOOP IMPORT       "
-        echo "============================"
+                echo "============================"
+                echo "     RUN SQOOP IMPORT       "
+                echo "============================"
 
-        sqoop import \
-            --connect jdbc:postgresql://18.134.163.221:5432/testdb \
-            --username admin \
-            --password admin123 \
-            --driver org.postgresql.Driver \
-            --table games \
-            --incremental lastmodified \
-            --check-column "gameDateTimeEst" \
-            --last-value "$LAST_VALUE" \
-            --target-dir "/tmp/DE011025/NBA/bronze/games" \
-            --fields-terminated-by ',' \
-            --as-textfile \
-            --num-mappers 1 \
-            --delete-target-dir
-        '''
-    }
-}
+                sqoop import \
+                    --connect jdbc:postgresql://18.134.163.221:5432/testdb \
+                    --username admin \
+                    --password admin123 \
+                    --driver org.postgresql.Driver \
+                    --table games \
+                    --incremental lastmodified \
+                    --check-column "gameDateTimeEst" \
+                    --last-value "$LAST_VALUE" \
+                    --target-dir "/tmp/DE011025/NBA/bronze/games" \
+                    --fields-terminated-by ',' \
+                    --as-textfile \
+                    --num-mappers 1 \
+                    --delete-target-dir
+                '''
+            }
+        }
 
 
 
