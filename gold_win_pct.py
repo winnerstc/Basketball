@@ -197,7 +197,7 @@ df_total_rebounds_season.write.mode("overwrite").format("parquet").saveAsTable(
 home_dd_wins = (
     df_games
         .select(
-            col("season").alias("game_year"),
+            col("game_year").alias("game_year"),
             col("homeTeamName").alias("team"),
             when(col("homeScore") - col("awayScore") >= 10, lit(1))
                 .otherwise(lit(0))
@@ -212,7 +212,7 @@ home_dd_wins = (
 away_dd_wins = (
     df_games
         .select(
-            col("season").alias("game_year"),
+            col("game_year").alias("game_year"),
             col("awayTeamName").alias("team"),
             when(col("awayScore") - col("homeScore") >= 10, lit(1))
                 .otherwise(lit(0))

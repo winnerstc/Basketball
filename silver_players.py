@@ -239,4 +239,11 @@ df_silver_final = (
     .parquet(silver_path)
 )
 
+(
+    df_quarantine
+    .write
+    .mode("overwrite")
+    .parquet(quarantine_path)
+)
+
 spark.stop()

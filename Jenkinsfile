@@ -1,6 +1,9 @@
 pipeline {
-    agent any  // or { label 'hadoop-edge' } if you have a specific node
-//
+    agent any 
+     // or { label 'hadoop-edge' } if you have a specific node
+    environment {
+            VENV = 'unit_testing_bd'
+    }
     stages {
         stage('Checkout') {
             steps {
@@ -233,7 +236,9 @@ stage('Sqoop Incremental Using HDFS') {
 //     }
 // }
 
+       
 
+<<<<<<< HEAD
     //     stage('Run silver Silver Players script') {
     //         steps {
     //             sh '''
@@ -288,6 +293,83 @@ stage('Sqoop Incremental Using HDFS') {
     //         }
     //     }
     // }
+=======
+        stage('Setup Python Environment') {
+            steps {
+                sh '''
+                python3 -m venv ${VENV}
+                source ${VENV}/bin/activate
+                pip install --upgrade pip
+                pip install -r requirements.txt
+                '''
+            }
+        }
+
+        stage('Run Unit Tests') {
+        steps {
+            sh '''
+            source ${VENV}/bin/activate
+            pytest --junitxml=pytest.xml
+            '''
+        }
+        }
+        
+
+        // stage('Run silver Silver Players script') {
+        //     steps {
+        //         sh '''
+        //           echo "Running silver cleaning script..."
+        //           spark-submit silver_players.py
+        //         '''
+        //     }
+        // }
+
+        // stage('Run silver Silver Games script') {
+        //     steps {
+        //         sh '''
+        //           echo "Running silver cleaning script..."
+        //           spark-submit silver_games.py
+        //         '''
+        //     }
+        // }
+
+        // stage('Run silver Player Stats script') {
+        //     steps {
+        //         sh '''
+        //           echo "Running silver cleaning script..."
+        //           spark-submit silver_playerstats.py
+        //         '''
+        //     }
+        // }
+
+        // stage('Run silver Team Histories script') {
+        //     steps {
+        //         sh '''
+        //           echo "Running silver cleaning script..."
+        //           spark-submit silver_teamhistories.py
+        //         '''
+        //     }
+        // }
+
+        // stage('Run silver Team Statistics script') {
+        //     steps {
+        //         sh '''
+        //           echo "Running silver cleaning script..."
+        //           spark-submit silver_teamstatistics.py
+        //         '''
+        //     }
+        // }
+
+        // stage('Run gold script') {
+        //     steps {
+        //         sh '''
+        //           echo "Running gold script..."
+        //           spark-submit silver-to-gold.py
+        //         '''
+        //     }
+        // }
+    }
+>>>>>>> 6d3e0c104828b3d26e51920b03098e43ba4e5d40
 
     post {
         success {
