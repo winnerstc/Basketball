@@ -1,5 +1,8 @@
 pipeline {
     agent any 
+     tools {
+        jdk 'JDK11'   // must match the Name you set
+    }
      // or { label 'hadoop-edge' } if you have a specific node
       environment {
             VENV = 'unit_testing_bd'
@@ -200,7 +203,7 @@ pipeline {
         stage('Setup Python Environment') {
             steps {
                 sh '''
-                echo %JAVA_HOME%
+                java --version
                 python3 -m venv ${VENV}
                 source ${VENV}/bin/activate
                 pip install --upgrade pip
