@@ -381,15 +381,17 @@ class GoldLayerTransformationsTest(unittest.TestCase):
 
         # --- Test 6: Total assists per player per season ---
         expected_total_assists = spark.createDataFrame([
-            (2024, 101, "Lebron James", 15), 
-            (2023, 101, "Lebron James", 8),  
-            (2024, 102, "Anthony Davis", 3),  
-            (2024, 103, "Rui Hachimura", 0),  
+            (2024, 101, "Lebron James", 15),
+            (2023, 101, "Lebron James", 8),
+            (2024, 102, "Anthony Davis", 3),
+            (2024, 103, "Rui Hachimura", 0),
         ], ["game_year", "personId", "playerName", "total_assists"])
 
-        assert_df_equal(gold_dfs["player_total_assists_per_season_gold"].orderBy("game_year", "personId"),
-                        expected_total_assists,
-                        check_all_struct=False)
+        assert_df_equal(
+            gold_dfs["player_total_assists_per_season_gold"].orderBy("game_year", "personId"),
+            expected_total_assists,
+            check_all_struct=False,
+        )
 
         # --- Test 7: Total rebounds per player per season ---
         # Output is ordered by 'game_year' and 'total_rebounds' descending.
