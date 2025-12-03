@@ -203,7 +203,7 @@ pipeline {
         stage('Setup Python Environment') {
             steps {
                 sh '''
-                java --version
+                echo %JAVA_HOME%
                 python3 -m venv ${VENV}
                 source ${VENV}/bin/activate
                 pip install --upgrade pip
