@@ -142,9 +142,6 @@ pipeline {
                 '''
             }
         }
-
-        
-        }
         
 
         stage('Run silver Silver Players script') {
