@@ -85,7 +85,6 @@ pipeline {
                     --fields-terminated-by ',' \
                     --as-textfile \
                     --num-mappers 1 \
-                    --delete-target-dir
                 '''
             }
         }
