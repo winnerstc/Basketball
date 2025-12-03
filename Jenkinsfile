@@ -212,70 +212,71 @@ pipeline {
             }
         }
 
-        stage('Run Unit Tests') {
+        
+        }
+        
+
+        stage('Run silver Silver Players script') {
+            steps {
+                sh '''
+                  echo "Running silver cleaning script..."
+                  spark-submit silver_players.py
+                '''
+            }
+        }
+
+        stage('Run silver Silver Games script') {
+            steps {
+                sh '''
+                  echo "Running silver cleaning script..."
+                  spark-submit silver_games.py
+                '''
+            }
+        }
+
+        stage('Run silver Player Stats script') {
+            steps {
+                sh '''
+                  echo "Running silver cleaning script..."
+                  spark-submit silver_playerstats.py
+                '''
+            }
+        }
+
+        stage('Run silver Team Histories script') {
+            steps {
+                sh '''
+                  echo "Running silver cleaning script..."
+                  spark-submit silver_teamhistories.py
+                '''
+            }
+        }
+
+        stage('Run silver Team Statistics script') {
+            steps {
+                sh '''
+                  echo "Running silver cleaning script..."
+                  spark-submit silver_teamstatistics.py
+                '''
+            }
+        }
+
+        stage('Run gold script') {
+            steps {
+                sh '''
+                  echo "Running gold script..."
+                  spark-submit silver-to-gold.py
+                '''
+            }
+        }
+    }
+    stage('Run Unit Tests') {
         steps {
             sh '''
             source ${VENV}/bin/activate
             pytest --junitxml=pytest.xml
             '''
         }
-        }
-        
-
-        // stage('Run silver Silver Players script') {
-        //     steps {
-        //         sh '''
-        //           echo "Running silver cleaning script..."
-        //           spark-submit silver_players.py
-        //         '''
-        //     }
-        // }
-
-        // stage('Run silver Silver Games script') {
-        //     steps {
-        //         sh '''
-        //           echo "Running silver cleaning script..."
-        //           spark-submit silver_games.py
-        //         '''
-        //     }
-        // }
-
-        // stage('Run silver Player Stats script') {
-        //     steps {
-        //         sh '''
-        //           echo "Running silver cleaning script..."
-        //           spark-submit silver_playerstats.py
-        //         '''
-        //     }
-        // }
-
-        // stage('Run silver Team Histories script') {
-        //     steps {
-        //         sh '''
-        //           echo "Running silver cleaning script..."
-        //           spark-submit silver_teamhistories.py
-        //         '''
-        //     }
-        // }
-
-        // stage('Run silver Team Statistics script') {
-        //     steps {
-        //         sh '''
-        //           echo "Running silver cleaning script..."
-        //           spark-submit silver_teamstatistics.py
-        //         '''
-        //     }
-        // }
-
-        // stage('Run gold script') {
-        //     steps {
-        //         sh '''
-        //           echo "Running gold script..."
-        //           spark-submit silver-to-gold.py
-        //         '''
-        //     }
-        // }
-    }
 
     post {
         success {
