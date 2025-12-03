@@ -7,7 +7,7 @@ from pyspark.sql.types import (
 )
 from pyspark.sql.functions import col
 
-from silver_team_statistics import transform_team_statistics
+from silver_teamstatistics import transform_team_statistics
 
 
 # ------------------------------------------------------------

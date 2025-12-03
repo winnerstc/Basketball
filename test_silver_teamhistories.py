@@ -6,7 +6,7 @@ from pyspark.sql.types import (
 )
 from pyspark.sql.functions import col, year, current_date
 
-from silver_team_histories import transform_team_histories
+from silver_teamhistories import transform_team_histories
 
 
 # ---------------------------------------------------------
