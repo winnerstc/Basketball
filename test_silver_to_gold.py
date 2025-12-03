@@ -13,18 +13,18 @@ from pyspark.sql.functions import (
     col, concat_ws, sum as F_sum, count as F_count,
     when, lit
 )
-
-def assert_df_equal(actual_df, expected_df, sort_cols=None):
+def assert_df_equal(actual_df, expected_df, sort_cols=None, **_ignored_kwargs):
     """
     Simple DataFrame equality helper for tests.
     - Optionally sorts by sort_cols
     - Compares schema and row content
+    - Ignores any extra keyword args (e.g. check_all_struct) so calls remain compatible
     """
     if sort_cols:
         actual_df = actual_df.orderBy(*sort_cols)
         expected_df = expected_df.orderBy(*sort_cols)
 
-    # Compare schema (field names + types)
+    # Compare schema
     assert actual_df.schema == expected_df.schema, (
         f"Schema mismatch:\nActual:   {actual_df.schema}\nExpected: {expected_df.schema}"
     )
@@ -35,7 +35,6 @@ def assert_df_equal(actual_df, expected_df, sort_cols=None):
     assert actual_rows == expected_rows, (
         f"Data mismatch:\nActual:   {actual_rows}\nExpected: {expected_rows}"
     )
-
 
 def compute_gold_tables(df_stats, df_games):
     """
