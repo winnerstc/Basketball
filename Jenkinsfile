@@ -56,7 +56,9 @@ pipeline {
 
         stage('Sqoop Incremental Using HDFS') {
             steps {
-                sh '''
+                sh '''#!/bin/bash
+                set -e
+
                 echo "============================"
                 echo "  READ TIMESTAMP FROM HDFS  "
                 echo "============================"
@@ -66,7 +68,7 @@ pipeline {
                     | sort \
                     | tail -n 1)
 
-                echo "LAST VALUE FROM BRONZE = $LAST_VALUE"
+                echo "LAST VALUE FROM BRONZE = ${LAST_VALUE}"
 
                 echo "============================"
                 echo "     RUN SQOOP IMPORT       "
@@ -80,19 +82,19 @@ pipeline {
                     --table games \
                     --incremental lastmodified \
                     --check-column "gameDateTimeEst" \
-                    --last-value "$LAST_VALUE" \
-                    --target-dir "/tmp/DE011025/NBA/bronze/games" \
+                    --last-value "${LAST_VALUE}" \
                     --fields-terminated-by ',' \
                     --as-textfile \
                     --num-mappers 1 \
+                    --target-dir "/tmp/DE011025/NBA/bronze/games" \
+                    --append
+
+                echo "============================"
+                echo "   SQOOP INCREMENTAL DONE   "
+                echo "============================"
                 '''
             }
         }
-
-
-
-
-
 
 
 
