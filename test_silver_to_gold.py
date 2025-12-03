@@ -4,18 +4,15 @@ from pyspark.sql import SparkSession
 from pyspark.sql.types import (
     StructType, StructField, StringType, IntegerType, DoubleType
 )
-# Note: assert_df_equal is typically available in pyspark.testing
-# In some environments, it might be part of an older or external module, 
-# but for modern PySpark, the import below is correct.
-
-# --- Start of the actual code block for the user's function for testing ---
-from pyspark.sql import SparkSession
 from pyspark.sql.functions import (
     col, concat_ws, sum as F_sum, count as F_count,
     when, lit
 )
 from pyspark.sql.types import IntegerType, LongType, DoubleType
 
+# ----------------------------------------------------------------------
+# Helper: DataFrame equality
+# ----------------------------------------------------------------------
 def _normalize_int_type(dt):
     """Treat IntegerType and LongType as the same logical type for testing."""
     if isinstance(dt, IntegerType):
@@ -72,6 +69,9 @@ def assert_df_equal(actual_df, expected_df, sort_cols=None, **_ignored_kwargs):
         f"Expected: {expected_rows}"
     )
 
+# ----------------------------------------------------------------------
+# Function under test: compute_gold_tables
+# ----------------------------------------------------------------------
 def compute_gold_tables(df_stats, df_games):
     """
     Take Silver-layer stats/games DataFrames and return a dict of
@@ -224,9 +224,10 @@ def compute_gold_tables(df_stats, df_games):
     gold_dfs["team_double_digit_wins_per_season_gold"] = df_double_digit_wins
 
     return gold_dfs
+
 # ----------------------------------------------------------------------
-
-
+# Unit tests
+# ----------------------------------------------------------------------
 class GoldLayerTransformationsTest(unittest.TestCase):
     """
     Test case for the compute_gold_tables function using PySpark.
@@ -234,11 +235,10 @@ class GoldLayerTransformationsTest(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         """Set up the Spark session before running any tests."""
-        # Use a single local thread for testing simplicity and speed
         cls.spark = (
             SparkSession.builder
                 .appName("GoldLayerTest")
-                .master("local[1]") 
+                .master("local[1]")
                 .getOrCreate()
         )
 
@@ -262,15 +262,14 @@ class GoldLayerTransformationsTest(unittest.TestCase):
             StructField("assists", IntegerType(), False),
             StructField("reboundstotal", IntegerType(), False)
         ])
-        
-        # Mock data for player_statistics_silver (df_stats)
+
         stats_data = [
             ("G1", 2024, 101, "Lebron", "James", 25, 10, 8),
-            ("G2", 2024, 101, "Lebron", "James", 30, 5, 12), 
-            ("G3", 2023, 101, "Lebron", "James", 15, 8, 5),  
+            ("G2", 2024, 101, "Lebron", "James", 30, 5, 12),
+            ("G3", 2023, 101, "Lebron", "James", 15, 8, 5),
             ("G1", 2024, 102, "Anthony", "Davis", 18, 2, 10),
-            ("G2", 2024, 102, "Anthony", "Davis", 22, 1, 9),  
-            ("G4", 2024, 103, "Rui", "Hachimura", 0, 0, 0),    
+            ("G2", 2024, 102, "Anthony", "Davis", 22, 1, 9),
+            ("G4", 2024, 103, "Rui", "Hachimura", 0, 0, 0),
         ]
 
         df_stats = spark.createDataFrame(stats_data, schema=stats_schema)
@@ -285,16 +284,11 @@ class GoldLayerTransformationsTest(unittest.TestCase):
             StructField("awayScore", IntegerType(), False)
         ])
 
-        # Mock data for games_silver (df_games)
         games_data = [
-            # LAL vs BOS: LAL wins by 10 (DD)
-            ("G1", 2024, "LAL", "BOS", 120, 110), 
-            # BOS vs MIA: MIA wins by 5 (Not DD)
-            ("G2", 2024, "BOS", "MIA", 100, 105), 
-            # LAL vs MIA: MIA wins by 10 (DD)
-            ("G3", 2023, "LAL", "MIA", 90, 100), 
-            # DEN vs LAL: DEN wins by 20 (DD)
-            ("G4", 2024, "DEN", "LAL", 115, 95)
+            ("G1", 2024, "LAL", "BOS", 120, 110),  # LAL +10
+            ("G2", 2024, "BOS", "MIA", 100, 105),  # MIA +5
+            ("G3", 2023, "LAL", "MIA", 90, 100),   # MIA +10
+            ("G4", 2024, "DEN", "LAL", 115, 95),   # DEN +20
         ]
 
         df_games = spark.createDataFrame(games_data, schema=games_schema)
@@ -317,26 +311,20 @@ class GoldLayerTransformationsTest(unittest.TestCase):
         self.assertEqual(set(gold_dfs.keys()), expected_keys)
 
         # --- Test 1: Player assists per game (overall) ---
-        # Lebron: 23A / 3 games = 7.666...
-        # AD: 3A / 2 games = 1.5
-       # --- Test 1: Player assists per game (overall) ---
-        # Lebron: 23A / 3 games = 7.666...
-        # AD: 3A / 2 games = 1.5
-        # Rui: 0A / 1 game = 0.0
         expected_assists = spark.createDataFrame([
             (101, "Lebron James", 23, 3, 23/3),
             (102, "Anthony Davis", 3, 2, 1.5),
             (103, "Rui Hachimura", 0, 1, 0.0),
         ], ["personId", "playerName", "total_assists", "games_played", "assists_per_game"])
 
-        assert_df_equal(gold_dfs["player_assists_per_game_gold"].orderBy("personId"),
-                        expected_assists.withColumn("assists_per_game", col("assists_per_game").cast(DoubleType())),
-                        check_all_struct=False)
-        
+        assert_df_equal(
+            gold_dfs["player_assists_per_game_gold"],
+            expected_assists.withColumn("assists_per_game", col("assists_per_game").cast(DoubleType())),
+            sort_cols=["personId"],
+            check_all_struct=False,
+        )
+
         # --- Test 2: Player rebounds per game (overall) ---
-        # Lebron: 25R / 3 games = 8.333...
-        # AD: 19R / 2 games = 9.5
-        # Rui: 0R / 1 game = 0.0
         expected_rebounds = spark.createDataFrame([
             (101, "Lebron James", 25, 3, 25/3),
             (102, "Anthony Davis", 19, 2, 9.5),
@@ -344,14 +332,13 @@ class GoldLayerTransformationsTest(unittest.TestCase):
         ], ["personId", "playerName", "total_rebounds", "games_played", "rebounds_per_game"])
 
         assert_df_equal(
-            gold_dfs["player_rebounds_per_game_gold"].orderBy("personId"),
+            gold_dfs["player_rebounds_per_game_gold"],
             expected_rebounds.withColumn("rebounds_per_game", col("rebounds_per_game").cast(DoubleType())),
+            sort_cols=["personId"],
             check_all_struct=False,
-)
+        )
+
         # --- Test 4: Player points per game (overall) ---
-        # Lebron: 70P / 3 games = 23.333...
-        # AD: 40P / 2 games = 20.0
-        # Rui: 0P / 1 game = 0.0
         expected_points_pg = spark.createDataFrame([
             (101, "Lebron James", 70, 3, 70/3),
             (102, "Anthony Davis", 40, 2, 20.0),
@@ -359,12 +346,13 @@ class GoldLayerTransformationsTest(unittest.TestCase):
         ], ["personId", "playerName", "total_points", "games_played", "points_per_game"])
 
         assert_df_equal(
-            gold_dfs["player_points_per_game_gold"].orderBy("personId"),
+            gold_dfs["player_points_per_game_gold"],
             expected_points_pg.withColumn("points_per_game", col("points_per_game").cast(DoubleType())),
+            sort_cols=["personId"],
             check_all_struct=False,
         )
 
-            # --- Test 5: Total points per player per season ---
+        # --- Test 5: Total points per player per season ---
         expected_total_points = spark.createDataFrame([
             (2024, 101, "Lebron James", 55),
             (2023, 101, "Lebron James", 15),
@@ -388,70 +376,69 @@ class GoldLayerTransformationsTest(unittest.TestCase):
         ], ["game_year", "personId", "playerName", "total_assists"])
 
         assert_df_equal(
-            gold_dfs["player_total_assists_per_season_gold"].orderBy("game_year", "personId"),
+            gold_dfs["player_total_assists_per_season_gold"],
             expected_total_assists,
+            sort_cols=["game_year", "personId"],
             check_all_struct=False,
         )
 
         # --- Test 7: Total rebounds per player per season ---
-        # Output is ordered by 'game_year' and 'total_rebounds' descending.
         expected_total_rebounds = spark.createDataFrame([
-            (2024, 101, "Lebron James", 20), 
-            (2024, 102, "Anthony Davis", 19), 
-            (2024, 103, "Rui Hachimura", 0),  
-            (2023, 101, "Lebron James", 5)    
+            (2024, 101, "Lebron James", 20),
+            (2024, 102, "Anthony Davis", 19),
+            (2024, 103, "Rui Hachimura", 0),
+            (2023, 101, "Lebron James", 5),
         ], ["game_year", "personId", "playerName", "total_rebounds"])
-        
-        actual_df_rebounds = gold_dfs["player_total_rebounds_per_season_gold"].select("game_year", "personId", "playerName", "total_rebounds")
-        
-        assert_df_equal(actual_df_rebounds,
-                        expected_total_rebounds,
-                        check_all_struct=False)
-                        
+
+        actual_df_rebounds = gold_dfs["player_total_rebounds_per_season_gold"].select(
+            "game_year", "personId", "playerName", "total_rebounds"
+        )
+
+        assert_df_equal(
+            actual_df_rebounds,
+            expected_total_rebounds,
+            sort_cols=["game_year", "personId"],
+            check_all_struct=False,
+        )
+
         # --- Test 3: Team win percentage by season ---
-        # LAL 2024: 1 win, 2 games -> 0.5
-        # BOS 2024: 0 wins, 2 games -> 0.0
-        # MIA 2024: 1 win, 1 game -> 1.0 (Win vs BOS)
-        # DEN 2024: 1 win, 1 game -> 1.0 (Win vs LAL)
-        # LAL 2023: 0 wins, 1 game -> 0.0
-        # MIA 2023: 1 win, 1 game -> 1.0 (Win vs LAL)
         expected_win_pct = spark.createDataFrame([
+            (2023, "LAL", 0, 1, 0.0),
+            (2023, "MIA", 1, 1, 1.0),
             (2024, "BOS", 0, 2, 0.0),
             (2024, "DEN", 1, 1, 1.0),
             (2024, "LAL", 1, 2, 0.5),
             (2024, "MIA", 1, 1, 1.0),
-            (2023, "LAL", 0, 1, 0.0),
-            (2023, "MIA", 1, 1, 1.0)
         ], ["game_year", "teamId", "wins", "games_played", "win_percentage"])
 
-        assert_df_equal(gold_dfs["team_win_percentage_gold"].orderBy("game_year", "teamId"),
-                        expected_win_pct.withColumn("win_percentage", col("win_percentage").cast(DoubleType())),
-                        check_all_struct=False)
+        assert_df_equal(
+            gold_dfs["team_win_percentage_gold"]
+                .withColumn("win_percentage", col("win_percentage").cast(DoubleType())),
+            expected_win_pct.withColumn("win_percentage", col("win_percentage").cast(DoubleType())),
+            sort_cols=["game_year", "teamId"],
+            check_all_struct=False,
+        )
 
         # --- Test 8: Team double-digit wins per season ---
-        # G1 (2024): LAL (+10) -> DD Win
-        # G2 (2024): MIA (+5) -> Not DD
-        # G3 (2023): MIA (+10) -> DD Win
-        # G4 (2024): DEN (+20) -> DD Win
-        
-        # 2024 DD Wins: DEN=1, LAL=1, BOS=0, MIA=0
-        # 2023 DD Wins: MIA=1, LAL=0
         expected_dd_wins = spark.createDataFrame([
-            (2024, "DEN", 1), 
-            (2024, "LAL", 1), 
+            (2023, "LAL", 0),
+            (2023, "MIA", 1),
             (2024, "BOS", 0),
+            (2024, "DEN", 1),
+            (2024, "LAL", 1),
             (2024, "MIA", 0),
-            (2023, "MIA", 1), 
-            (2023, "LAL", 0)
         ], ["game_year", "team", "double_digit_wins"])
-        
-        # Check against actual output, respecting its ordering
-        actual_df_dd_wins = gold_dfs["team_double_digit_wins_per_season_gold"].select("game_year", "team", "double_digit_wins")
 
-        assert_df_equal(actual_df_dd_wins,
-                        expected_dd_wins.withColumn("double_digit_wins", col("double_digit_wins").cast(IntegerType())),
-                        check_all_struct=False)
+        actual_df_dd_wins = gold_dfs["team_double_digit_wins_per_season_gold"].select(
+            "game_year", "team", "double_digit_wins"
+        )
 
-# This is the line that was missing and prevents the script from running the tests!
+        assert_df_equal(
+            actual_df_dd_wins,
+            expected_dd_wins.withColumn("double_digit_wins", col("double_digit_wins").cast(IntegerType())),
+            sort_cols=["game_year", "team"],
+            check_all_struct=False,
+        )
+
 if __name__ == '__main__':
     unittest.main(argv=['first-arg-is-ignored'], exit=False)
