@@ -348,19 +348,22 @@ class GoldLayerTransformationsTest(unittest.TestCase):
             expected_rebounds.withColumn("rebounds_per_game", col("rebounds_per_game").cast(DoubleType())),
             check_all_struct=False,
 )
-
         # --- Test 4: Player points per game (overall) ---
         # Lebron: 70P / 3 games = 23.333...
         # AD: 40P / 2 games = 20.0
+        # Rui: 0P / 1 game = 0.0
         expected_points_pg = spark.createDataFrame([
             (101, "Lebron James", 70, 3, 70/3),
-            (102, "Anthony Davis", 40, 2, 20.0)
+            (102, "Anthony Davis", 40, 2, 20.0),
+            (103, "Rui Hachimura", 0, 1, 0.0),
         ], ["personId", "playerName", "total_points", "games_played", "points_per_game"])
-        
-        assert_df_equal(gold_dfs["player_points_per_game_gold"].orderBy("personId"),
-                        expected_points_pg.withColumn("points_per_game", col("points_per_game").cast(DoubleType())),
-                        check_all_struct=False)
-                        
+
+        assert_df_equal(
+            gold_dfs["player_points_per_game_gold"].orderBy("personId"),
+            expected_points_pg.withColumn("points_per_game", col("points_per_game").cast(DoubleType())),
+            check_all_struct=False,
+        )
+
         # --- Test 5: Total points per player per season ---
         expected_total_points = spark.createDataFrame([
             (2024, 101, "Lebron James", 55), 
