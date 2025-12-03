@@ -319,11 +319,16 @@ class GoldLayerTransformationsTest(unittest.TestCase):
         # --- Test 1: Player assists per game (overall) ---
         # Lebron: 23A / 3 games = 7.666...
         # AD: 3A / 2 games = 1.5
+       # --- Test 1: Player assists per game (overall) ---
+        # Lebron: 23A / 3 games = 7.666...
+        # AD: 3A / 2 games = 1.5
+        # Rui: 0A / 1 game = 0.0
         expected_assists = spark.createDataFrame([
             (101, "Lebron James", 23, 3, 23/3),
-            (102, "Anthony Davis", 3, 2, 1.5)
+            (102, "Anthony Davis", 3, 2, 1.5),
+            (103, "Rui Hachimura", 0, 1, 0.0),
         ], ["personId", "playerName", "total_assists", "games_played", "assists_per_game"])
-        
+
         assert_df_equal(gold_dfs["player_assists_per_game_gold"].orderBy("personId"),
                         expected_assists.withColumn("assists_per_game", col("assists_per_game").cast(DoubleType())),
                         check_all_struct=False)
