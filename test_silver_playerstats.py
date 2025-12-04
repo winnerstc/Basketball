@@ -10,7 +10,7 @@ from pyspark.sql.types import (
 )
 from pyspark.sql.functions import col
 
-from silver_player_statistics import transform_player_statistics
+from silver_playerstats import transform_player_statistics
 
 
 # ----------------------------------------------------------------------
