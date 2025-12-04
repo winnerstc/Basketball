@@ -207,17 +207,26 @@ pipeline {
         //         '''
         //     }
         // }
-
-        stage('Run Unit Tests') {
+           stage('Run Fact and Dimensional tables') {
             steps {
                 sh '''#!/bin/bash
                 set -e
-                source ${VENV}/bin/activate
-                pytest --junitxml=pytest.xml
+                echo "Running fact and dimensions script ..."
+                spark-submit fact_dim_NBA.py
                 '''
             }
         }
-    } // end stages
+    //     stage('Run Unit Tests') {
+    //         steps {
+    //             sh '''#!/bin/bash
+    //             set -e
+    //             source ${VENV}/bin/activate
+    //             pytest --junitxml=pytest.xml
+    //             '''
+    //         }
+    //     }
+    // } // end stages
+
 
     post {
         success {
