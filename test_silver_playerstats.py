@@ -2,7 +2,7 @@ import pytest
 from pyspark.sql.types import (
     StructType, StructField, StringType, IntegerType, DoubleType
 )
-from transform_player_statistics import transform_player_statistics
+from silver_playerstats import transform_player_statistics
 
 
 # ============================================================
