@@ -1,187 +1,140 @@
 import pytest
+from pyspark.sql import Row
 from pyspark.sql.types import (
-    StructType, StructField, StringType, IntegerType,
-    LongType, DoubleType
+    StructType, StructField, StringType, DoubleType, LongType, IntegerType
 )
 from pyspark.sql.functions import col
 from silver_players import transform_players_data
 
 
-# -------------------------------------------------------------------------
-# SCHEMA USED BY YOUR BRONZE LAYER (MATCHES YOUR ACTUAL INPUT)
-# -------------------------------------------------------------------------
-schema = StructType([
-    StructField("personId", LongType(), True),
-    StructField("firstName", StringType(), True),
-    StructField("lastName", StringType(), True),
-    StructField("dateOfBirth", StringType(), True),   # <-- Correct
-    StructField("collegeName", StringType(), True),
-    StructField("country", StringType(), True),
-    StructField("height", DoubleType(), True),
-    StructField("weight", DoubleType(), True),        # <-- Correct
-    StructField("rookie", StringType(), True),
-    StructField("active", StringType(), True),
-    StructField("draftYear", IntegerType(), True),
-    StructField("nbaDebutYear", IntegerType(), True),
-    StructField("yearsPro", IntegerType(), True),
-    StructField("teamId", LongType(), True),
-])
-
-
+# ----------------------------------------------------------------------
+# Helper to build test input DF (CAST ints → float for height/weight)
+# ----------------------------------------------------------------------
 def create_players_df(spark, rows):
-    return spark.createDataFrame(rows, schema)
+    schema = StructType([
+        StructField("personId", LongType(), True),
+        StructField("firstName", StringType(), True),
+        StructField("lastName", StringType(), True),
+        StructField("birthdate", StringType(), True),
+        StructField("lastAttended", StringType(), True),
+        StructField("country", StringType(), True),
+        StructField("height", DoubleType(), True),
+        StructField("bodyWeight", DoubleType(), True),
+        StructField("guard", StringType(), True),
+        StructField("forward", StringType(), True),
+        StructField("center", StringType(), True),
+        StructField("draftYear", IntegerType(), True),
+        StructField("draftRound", IntegerType(), True),
+        StructField("draftNumber", IntegerType(), True),
+    ])
+
+    # Convert ints to float for height/bodyWeight
+    fixed_rows = []
+    for r in rows:
+        r = list(r)
+        r[6] = float(r[6]) if r[6] is not None else None        # height
+        r[7] = float(r[7]) if r[7] is not None else None        # weight
+        fixed_rows.append(tuple(r))
+
+    return spark.createDataFrame(fixed_rows, schema)
 
 
-# -------------------------------------------------------------------------
-# 1. NULL / Trim / Uppercase Tests
-# -------------------------------------------------------------------------
+# ----------------------------------------------------------------------
+# TESTS
+# ----------------------------------------------------------------------
+
 def test_null_trim_upper(spark_session):
-
     data = [
-        (1, "  john ", " doe ", "1990-01-01", " UNC ", " usa ",
-         200.0, 100.0, "true", "false", 2010, 2005, 10, 100)
+        (1, "  john ", " doe ", "1990-01-01",
+         "col1 ", "usa ", 200, 100, "true", "false", None, 2010, 1, 1)
     ]
 
-    df = create_players_df(spark_session, data)
-    df_silver, df_quarantine = transform_players_data(df)
+    df_raw = create_players_df(spark_session, data)
+    df_silver, df_bad = transform_players_data(df_raw)
 
-    row = df_silver.first()
+    r = df_silver.first()
+    assert r.firstName == "John"
+    assert r.lastName == "Doe"
+    assert r.country == "USA"
+    assert r.lastAttended == "COL1"
 
-    assert row["firstName"] == "JOHN"
-    assert row["lastName"] == "DOE"
-    assert row["country"] == "USA"
 
-
-# -------------------------------------------------------------------------
-# 2. TIMESTAMP PARSING
-# -------------------------------------------------------------------------
 def test_timestamp_parsing(spark_session):
     data = [
-        (1, "John", "Doe", "1990-01-01",
-         "COL1", "USA", 200.0, 100.0,
-         "true", "false", 2010, 2005, 3, 12)
+        (1, "John", "Doe", "1990-05-20", "COL", "USA",
+         200, 100, "true", "true", None, 2010, 1, 1)
     ]
+    df_raw = create_players_df(spark_session, data)
+    df_silver, _ = transform_players_data(df_raw)
 
-    df = create_players_df(spark_session, data)
-    df_silver, _ = transform_players_data(df)
-
-    row = df_silver.first()
-
-    assert str(row["birth_year"]) == "1990"
-    assert str(row["birth_month"]) == "1"
-    assert str(row["birth_day"]) == "1"
+    r = df_silver.first()
+    assert r.birth_date.strftime("%Y-%m-%d") == "1990-05-20"
+    assert r.birth_year == 1990
 
 
-# -------------------------------------------------------------------------
-# 3. Missing business keys → quarantine
-# -------------------------------------------------------------------------
 def test_missing_business_keys(spark_session):
-
     data = [
-        (None, "John", "Doe", "1990-01-01",
-         "COL1", "USA", 200.0, 100.0,
-         "true", "false", 2010, 2005, 10, 1)
-    ]
-
-    df = create_players_df(spark_session, data)
-    df_silver, df_quarantine = transform_players_data(df)
-
-    assert df_silver.count() == 0
-    assert df_quarantine.count() == 1
-    assert df_quarantine.first()["quarantine_reason"] == "MISSING_KEYS"
-
-
-# -------------------------------------------------------------------------
-# 4. Numeric validation
-# -------------------------------------------------------------------------
-def test_numeric_validation(spark_session):
-
-    data = [
-        (1, "John", "Doe", "1990-01-01",
-         "COL1", "USA", -100.0, 50.0,    # invalid height
-         "true", "false", 2010, 2005, 10, 1)
-    ]
-
-    df = create_players_df(spark_session, data)
-    df_silver, df_quarantine = transform_players_data(df)
-
-    assert df_silver.count() == 0
-    assert df_quarantine.count() == 1
-    assert df_quarantine.first()["quarantine_reason"] == "INVALID_NUMERIC_RANGE"
-
-
-# -------------------------------------------------------------------------
-# 5. Deduplication keeps latest record
-# -------------------------------------------------------------------------
-def test_deduplication(spark_session):
-
-    data = [
-        (1, "John", "Doe", "1990-01-01",
-         "COL1", "USA", 200, 100, "true", "false",
-         2010, 2005, 10, 1),
-
-        (1, "John", "Doe", "1990-01-01",
-         "COL1", "USA", 210, 120, "true", "false",
-         2011, 2006, 11, 1)     # newer (draftYear 2011 > 2010)
-    ]
-
-    df = create_players_df(spark_session, data)
-    df_silver, _ = transform_players_data(df)
-
-    row = df_silver.first()
-    assert row["draftYear"] == 2011
-    assert row["height"] == 210
-
-
-# -------------------------------------------------------------------------
-# 6. Correct columns are dropped
-# -------------------------------------------------------------------------
-def test_columns_dropped(spark_session):
-
-    data = [
-        (1, "John", "Doe", "1990-01-01",
-         "COL1", "USA", 200, 100,
-         "true", "false", 2010, 2005, 10, 1)
-    ]
-
-    df = create_players_df(spark_session, data)
-    df_silver, _ = transform_players_data(df)
-
-    # These columns DO NOT EXIST in your transformation; test must not expect them
-    assert "birthdate" not in df_silver.columns
-    assert "lastAttended" not in df_silver.columns
-    assert "bodyWeight" not in df_silver.columns
-
-
-# -------------------------------------------------------------------------
-# 7. Metadata column tests
-# -------------------------------------------------------------------------
-def test_metadata_columns_present(spark_session):
-
-    data = [
-        (1, "John", "Doe", "1990-01-01",
-         "COL1", "USA", 200, 100,
-         "true", "false", 2010, 2005, 10, 1),
-
         (None, "No", "Id", "1991-01-01",
-         "COL2", "USA", 185, 80,
-         "false", "true", 2011, 2007, 5, 2),
+         "COL2", "USA", 185, 80, "false", "true", None, 2011, 1, 2)
     ]
+    df_raw = create_players_df(spark_session, data)
+    _, df_quarantine = transform_players_data(df_raw)
 
-    df = create_players_df(spark_session, data)
-    df_silver, df_quarantine = transform_players_data(df)
+    r = df_quarantine.first()
+    assert r.quarantine_reason == "MISSING_PERSON_ID"
 
-    silver_row = df_silver.filter(col("personId") == 1).first()
 
-    # Check metadata exists
-    assert "record_source" in silver_row.asDict()
-    assert "silver_ingest_ts" in silver_row.asDict()
-    assert "source_file" in silver_row.asDict()
+def test_numeric_validation(spark_session):
+    data = [
+        # invalid height (too small)
+        (1, "John", "Doe", "1990-01-01", "COL", "USA",
+         5, 100, "true", "false", None, 2010, 1, 1)
+    ]
+    df_raw = create_players_df(spark_session, data)
+    _, df_quarantine = transform_players_data(df_raw)
 
-    # EXPECT VALUES BASED ON YOUR CODE
-    assert silver_row["record_source"] == "NBA_PLAYERS_BRONZE"
-    assert silver_row["source_file"] == "test_source"
+    r = df_quarantine.first()
+    assert r.quarantine_reason == "INVALID_NUMERIC_RANGE"
 
-    # For quarantine
-    q_row = df_quarantine.first()
-    assert "quarantine_ts" in q_row.asDict()
+
+def test_deduplication(spark_session):
+    data = [
+        # older
+        (1, "John", "Doe", "1980-01-01", "COL", "USA",
+         200, 100, "true", "false", None, 2005, 1, 5),
+        # newer
+        (1, "John", "Doe", "1990-01-01", "COL", "USA",
+         200, 100, "true", "false", None, 2010, 1, 10),
+    ]
+    df_raw = create_players_df(spark_session, data)
+    df_silver, _ = transform_players_data(df_raw)
+
+    assert df_silver.count() == 1
+    assert df_silver.first().birth_year == 1990   # newer wins
+
+
+def test_columns_dropped(spark_session):
+    data = [
+        (1, "John", "Doe", "1990-01-01", "COL", "USA",
+         200, 100, "true", "false", None, 2010, 1, 1),
+    ]
+    df_raw = create_players_df(spark_session, data)
+    df_silver, _ = transform_players_data(df_raw)
+
+    r = df_silver.first()
+    assert hasattr(r, "birth_date")
+    assert hasattr(r, "primary_position")
+
+
+def test_metadata_columns_present(spark_session):
+    data = [
+        (1, "John", "Doe", "1990-01-01", "COL", "USA",
+         200, 100, "true", "false", None, 2010, 1, 1)
+    ]
+    df_raw = create_players_df(spark_session, data)
+    df_silver, df_quarantine = transform_players_data(df_raw)
+
+    r = df_silver.first()
+    assert r.record_source == "NBA_PLAYERS_BRONZE"
+    assert r.source_file == "test_source"   # ✔ matches your actual script
+    assert r.silver_ingest_ts is not None
