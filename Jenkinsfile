@@ -246,6 +246,17 @@ pipeline {
                 '''
             }
         }
+    //     stage('Run Unit Tests') {
+    //         steps {
+    //             sh '''#!/bin/bash
+    //             set -e
+    //             source ${VENV}/bin/activate
+    //             pytest --junitxml=pytest.xml
+    //             '''
+    //         }
+    //     }
+     } // end stages
+
     }
 
     post {

@@ -8,20 +8,20 @@ spark = SparkSession.builder.appName("silver_to_gold_nba").getOrCreate()
 # ----------------------------------------------------------
 # HDFS Silver Paths
 # ----------------------------------------------------------
-games_path = "/tmp/DE011025/NBA/silver/games"
-players_path = "/tmp/DE011025/NBA/silver/players"
-player_stats_path = "/tmp/DE011025/NBA/silver/player_statistics"
-team_histories_path = "/tmp/DE011025/NBA/silver/team_histories"
-team_stats_path = "/tmp/DE011025/NBA/silver/team_statistics"
+games_path = "hdfs:///tmp/DE011025/NBA/silver/games"
+players_path = "hdfs:///tmp/DE011025/NBA/silver/players"
+player_stats_path = "hdfs:///tmp/DE011025/NBA/silver/player_statistics"
+team_histories_path = "hdfs:///tmp/DE011025/NBA/silver/team_histories"
+team_stats_path = "hdfs:///tmp/DE011025/NBA/silver/team_statistics"
 
 # ----------------------------------------------------------
 # HDFS Gold Paths
 # ----------------------------------------------------------
-fact_path = "/tmp/DE011025/NBA/gold/fact_nba_stats"
-dim_players_path = "/tmp/DE011025/NBA/gold/dim_players"
-dim_teams_path = "/tmp/DE011025/NBA/gold/dim_teams"
-dim_games_path = "/tmp/DE011025/NBA/gold/dim_games"
-dim_dates_path = "/tmp/DE011025/NBA/gold/dim_dates"
+fact_path = "hdfs:///tmp/DE011025/NBA/gold/fact_nba_stats"
+dim_players_path = "hdfs:///tmp/DE011025/NBA/gold/dim_players"
+dim_teams_path = "hdfs:///tmp/DE011025/NBA/gold/dim_teams"
+dim_games_path = "hdfs:///tmp/DE011025/NBA/gold/dim_games"
+dim_dates_path = "hdfs:///tmp/DE011025/NBA/gold/dim_dates"
 
 # ----------------------------------------------------------
 # READ SILVER TABLES
