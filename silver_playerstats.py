@@ -1,3 +1,4 @@
+# coding: utf-8
 # from pyspark.sql import SparkSession
 # from pyspark.sql.functions import (
 #     col, trim, upper, to_timestamp, to_date, year, month,
@@ -190,7 +191,7 @@
 #     current_timestamp, when, row_number, lit
 # )
 # from pyspark.sql.window import Window
-# coding: utf-8
+
 from pyspark.sql import SparkSession
 from pyspark.sql.functions import (
     col, trim, upper, to_timestamp, to_date, year, month,
