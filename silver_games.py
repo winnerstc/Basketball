@@ -239,7 +239,7 @@ if __name__ == "__main__":
         .appName("list_hive_dbs")
         .enableHiveSupport()   # make sure this is here
         .getOrCreate()
-)
+    )
 
     
     # Initialize Spark Session
