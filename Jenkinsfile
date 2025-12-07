@@ -152,55 +152,55 @@ pipeline {
             }
         }
 
-        // stage('Run Silver Players script') {
-        //     steps {
-        //         sh '''#!/bin/bash
-        //         set -e
-        //         echo "Running silver players script..."
-        //         spark-submit silver_players.py
-        //         '''
-        //     }
-        // }
+        stage('Run Silver Players script') {
+            steps {
+                sh '''#!/bin/bash
+                set -e
+                echo "Running silver players script..."
+                spark-submit silver_players.py
+                '''
+            }
+        }
 
-        // stage('Run Silver Games script') {
-        //     steps {
-        //         sh '''#!/bin/bash
-        //         set -e
-        //         echo "Running silver games script..."
-        //         spark-submit silver_games.py
-        //         '''
-        //     }
-        // }
+        stage('Run Silver Games script') {
+            steps {
+                sh '''#!/bin/bash
+                set -e
+                echo "Running silver games script..."
+                spark-submit silver_games.py
+                '''
+            }
+        }
 
-        // stage('Run Silver Player Stats script') {
-        //     steps {
-        //         sh '''#!/bin/bash
-        //         set -e
-        //         echo "Running silver player stats script..."
-        //         spark-submit silver_playerstats.py
-        //         '''
-        //     }
-        // }
+        stage('Run Silver Player Stats script') {
+            steps {
+                sh '''#!/bin/bash
+                set -e
+                echo "Running silver player stats script..."
+                spark-submit silver_playerstats.py
+                '''
+            }
+        }
 
-        // stage('Run Silver Team Histories script') {
-        //     steps {
-        //         sh '''#!/bin/bash
-        //         set -e
-        //         echo "Running silver team histories script..."
-        //         spark-submit silver_teamhistories.py
-        //         '''
-        //     }
-        // }
+        stage('Run Silver Team Histories script') {
+            steps {
+                sh '''#!/bin/bash
+                set -e
+                echo "Running silver team histories script..."
+                spark-submit silver_teamhistories.py
+                '''
+            }
+        }
 
-        // stage('Run Silver Team Statistics script') {
-        //     steps {
-        //         sh '''#!/bin/bash
-        //         set -e
-        //         echo "Running silver team statistics script..."
-        //         spark-submit silver_teamstatistics.py
-        //         '''
-        //     }
-        // }
+        stage('Run Silver Team Statistics script') {
+            steps {
+                sh '''#!/bin/bash
+                set -e
+                echo "Running silver team statistics script..."
+                spark-submit silver_teamstatistics.py
+                '''
+            }
+        }
 
         stage('Run Gold script') {
             steps {
