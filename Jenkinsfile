@@ -10,129 +10,129 @@ pipeline {
         VENV = 'unit_testing_bd'
     }
 
-    stages {
-        stage('Checkout') {
-            steps {
-                checkout scm
-            }
-        }
+    // stages {
+    //     stage('Checkout') {
+    //         steps {
+    //             checkout scm
+    //         }
+    //     }
 
-        stage('Sqoop Incremental Using HDFS for GAMES') {
-            steps {
-                sh '''#!/bin/bash
-                set -e
+    //     stage('Sqoop Incremental Using HDFS for GAMES') {
+    //         steps {
+    //             sh '''#!/bin/bash
+    //             set -e
 
-                echo "============================"
-                echo "  READ TIMESTAMP FROM HDFS  "
-                echo "============================"
+    //             echo "============================"
+    //             echo "  READ TIMESTAMP FROM HDFS  "
+    //             echo "============================"
 
-                LAST_VALUE=$(hdfs dfs -cat /tmp/DE011025/NBA/bronze/games/part* \
-                    | cut -d',' -f2 \
-                    | sort \
-                    | tail -n 1)
+    //             LAST_VALUE=$(hdfs dfs -cat /tmp/DE011025/NBA/bronze/games/part* \
+    //                 | cut -d',' -f2 \
+    //                 | sort \
+    //                 | tail -n 1)
 
-                echo "LAST VALUE FROM BRONZE = ${LAST_VALUE}"
+    //             echo "LAST VALUE FROM BRONZE = ${LAST_VALUE}"
 
-                echo "============================"
-                echo "     RUN SQOOP IMPORT       "
-                echo "============================"
+    //             echo "============================"
+    //             echo "     RUN SQOOP IMPORT       "
+    //             echo "============================"
 
-                sqoop import \
-                  --connect jdbc:postgresql://18.134.163.221:5432/testdb \
-                  --username admin \
-                  --password admin123 \
-                  --driver org.postgresql.Driver \
-                  --query "SELECT * FROM games WHERE \\\"gameDateTimeEst\\\" > '${LAST_VALUE}' AND \\$CONDITIONS" \
-                  --target-dir /tmp/DE011025/NBA/bronze/games \
-                  --fields-terminated-by ',' \
-                  --as-textfile \
-                  --num-mappers 1 \
-                  --append
+    //             sqoop import \
+    //               --connect jdbc:postgresql://18.134.163.221:5432/testdb \
+    //               --username admin \
+    //               --password admin123 \
+    //               --driver org.postgresql.Driver \
+    //               --query "SELECT * FROM games WHERE \\\"gameDateTimeEst\\\" > '${LAST_VALUE}' AND \\$CONDITIONS" \
+    //               --target-dir /tmp/DE011025/NBA/bronze/games \
+    //               --fields-terminated-by ',' \
+    //               --as-textfile \
+    //               --num-mappers 1 \
+    //               --append
 
-                echo "============================"
-                echo "   SQOOP INCREMENTAL DONE   "
-                echo "============================"
-                '''
-            }
-        }
+    //             echo "============================"
+    //             echo "   SQOOP INCREMENTAL DONE   "
+    //             echo "============================"
+    //             '''
+    //         }
+    //     }
 
-        stage('Sqoop Incremental Using HDFS for PLAYER_STATISTICS') {
-            steps {
-                sh '''#!/bin/bash
-                set -e
+    //     stage('Sqoop Incremental Using HDFS for PLAYER_STATISTICS') {
+    //         steps {
+    //             sh '''#!/bin/bash
+    //             set -e
 
-                echo "============================"
-                echo "  READ TIMESTAMP FROM HDFS  "
-                echo "============================"
+    //             echo "============================"
+    //             echo "  READ TIMESTAMP FROM HDFS  "
+    //             echo "============================"
 
-                LAST_VALUE=$(hdfs dfs -cat /tmp/DE011025/NBA/bronze/player_statistics/part* \
-                    | cut -d',' -f2 \
-                    | sort \
-                    | tail -n 1)
+    //             LAST_VALUE=$(hdfs dfs -cat /tmp/DE011025/NBA/bronze/player_statistics/part* \
+    //                 | cut -d',' -f2 \
+    //                 | sort \
+    //                 | tail -n 1)
 
-                echo "LAST VALUE FROM BRONZE = ${LAST_VALUE}"
+    //             echo "LAST VALUE FROM BRONZE = ${LAST_VALUE}"
 
-                echo "============================"
-                echo "     RUN SQOOP IMPORT       "
-                echo "============================"
+    //             echo "============================"
+    //             echo "     RUN SQOOP IMPORT       "
+    //             echo "============================"
 
-                sqoop import \
-                  --connect jdbc:postgresql://18.134.163.221:5432/testdb \
-                  --username admin \
-                  --password admin123 \
-                  --driver org.postgresql.Driver \
-                  --query "SELECT * FROM player_statistics WHERE \\\"gameDateTimeEst\\\" > '${LAST_VALUE}' AND \\$CONDITIONS" \
-                  --target-dir /tmp/DE011025/NBA/bronze/player_statistics \
-                  --fields-terminated-by ',' \
-                  --as-textfile \
-                  --num-mappers 1 \
-                  --append
+    //             sqoop import \
+    //               --connect jdbc:postgresql://18.134.163.221:5432/testdb \
+    //               --username admin \
+    //               --password admin123 \
+    //               --driver org.postgresql.Driver \
+    //               --query "SELECT * FROM player_statistics WHERE \\\"gameDateTimeEst\\\" > '${LAST_VALUE}' AND \\$CONDITIONS" \
+    //               --target-dir /tmp/DE011025/NBA/bronze/player_statistics \
+    //               --fields-terminated-by ',' \
+    //               --as-textfile \
+    //               --num-mappers 1 \
+    //               --append
 
-                echo "============================"
-                echo "   SQOOP INCREMENTAL DONE   "
-                echo "============================"
-                '''
-            }
-        }
+    //             echo "============================"
+    //             echo "   SQOOP INCREMENTAL DONE   "
+    //             echo "============================"
+    //             '''
+    //         }
+    //     }
 
-        stage('Sqoop Incremental Using HDFS for TEAM_STATISTICS') {
-            steps {
-                sh '''#!/bin/bash
-                set -e
+    //     stage('Sqoop Incremental Using HDFS for TEAM_STATISTICS') {
+    //         steps {
+    //             sh '''#!/bin/bash
+    //             set -e
 
-                echo "============================"
-                echo "  READ TIMESTAMP FROM HDFS  "
-                echo "============================"
+    //             echo "============================"
+    //             echo "  READ TIMESTAMP FROM HDFS  "
+    //             echo "============================"
 
-                LAST_VALUE=$(hdfs dfs -cat /tmp/DE011025/NBA/bronze/team_statistics/part* \
-                    | cut -d',' -f2 \
-                    | sort \
-                    | tail -n 1)
+    //             LAST_VALUE=$(hdfs dfs -cat /tmp/DE011025/NBA/bronze/team_statistics/part* \
+    //                 | cut -d',' -f2 \
+    //                 | sort \
+    //                 | tail -n 1)
 
-                echo "LAST VALUE FROM BRONZE = ${LAST_VALUE}"
+    //             echo "LAST VALUE FROM BRONZE = ${LAST_VALUE}"
 
-                echo "============================"
-                echo "     RUN SQOOP IMPORT       "
-                echo "============================"
+    //             echo "============================"
+    //             echo "     RUN SQOOP IMPORT       "
+    //             echo "============================"
 
-                sqoop import \
-                  --connect jdbc:postgresql://18.134.163.221:5432/testdb \
-                  --username admin \
-                  --password admin123 \
-                  --driver org.postgresql.Driver \
-                  --query "SELECT * FROM team_statistics WHERE \\\"gameDateTimeEst\\\" > '${LAST_VALUE}' AND \\$CONDITIONS" \
-                  --target-dir /tmp/DE011025/NBA/bronze/team_statistics \
-                  --fields-terminated-by ',' \
-                  --as-textfile \
-                  --num-mappers 1 \
-                  --append
+    //             sqoop import \
+    //               --connect jdbc:postgresql://18.134.163.221:5432/testdb \
+    //               --username admin \
+    //               --password admin123 \
+    //               --driver org.postgresql.Driver \
+    //               --query "SELECT * FROM team_statistics WHERE \\\"gameDateTimeEst\\\" > '${LAST_VALUE}' AND \\$CONDITIONS" \
+    //               --target-dir /tmp/DE011025/NBA/bronze/team_statistics \
+    //               --fields-terminated-by ',' \
+    //               --as-textfile \
+    //               --num-mappers 1 \
+    //               --append
 
-                echo "============================"
-                echo "   SQOOP INCREMENTAL DONE   "
-                echo "============================"
-                '''
-            }
-        }
+    //             echo "============================"
+    //             echo "   SQOOP INCREMENTAL DONE   "
+    //             echo "============================"
+    //             '''
+    //         }
+    //     }
 
         stage('Setup Python Environment') {
             steps {
@@ -198,33 +198,33 @@ pipeline {
             }
         }
 
-        stage('Run Gold script') {
-            steps {
-                sh '''#!/bin/bash
-                set -e
-                echo "Running gold script..."
-                spark-submit silver-to-gold.py
-                '''
-            }
-        }
-           stage('Run Fact and Dimensional tables') {
-            steps {
-                sh '''#!/bin/bash
-                set -e
-                echo "Running fact and dimensions script ..."
-                spark-submit fact_dim_NBA.py
-                '''
-            }
-        }
-        stage('Run Unit Tests') {
-            steps {
-                sh '''#!/bin/bash
-                set -e
-                source ${VENV}/bin/activate
-                pytest --junitxml=pytest.xml
-                '''
-            }
-        }
+        // stage('Run Gold script') {
+        //     steps {
+        //         sh '''#!/bin/bash
+        //         set -e
+        //         echo "Running gold script..."
+        //         spark-submit silver-to-gold.py
+        //         '''
+        //     }
+        // }
+        //    stage('Run Fact and Dimensional tables') {
+        //     steps {
+        //         sh '''#!/bin/bash
+        //         set -e
+        //         echo "Running fact and dimensions script ..."
+        //         spark-submit fact_dim_NBA.py
+        //         '''
+        //     }
+        // }
+        // stage('Run Unit Tests') {
+        //     steps {
+        //         sh '''#!/bin/bash
+        //         set -e
+        //         source ${VENV}/bin/activate
+        //         pytest --junitxml=pytest.xml
+        //         '''
+        //     }
+        // }
      } // end stages
 
 
