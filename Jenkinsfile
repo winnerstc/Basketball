@@ -198,7 +198,6 @@ pipeline {
             }
         }
 
-<<<<<<< HEAD
         // stage('Run Gold script') {
         //     steps {
         //         sh '''#!/bin/bash
@@ -208,17 +207,6 @@ pipeline {
         //         '''
         //     }
         // }
-=======
-        stage('Run Gold script') {
-            steps {
-                sh '''#!/bin/bash
-                set -e
-                echo "Running gold script..."
-                spark-submit silver-to-gold.py
-                '''
-            }
-        }
->>>>>>> 3a5d4ec04f545f6fba35e937730b0c3f3495e1be
         //    stage('Run Fact and Dimensional tables') {
         //     steps {
         //         sh '''#!/bin/bash
@@ -228,7 +216,6 @@ pipeline {
         //         '''
         //     }
         // }
-<<<<<<< HEAD
         // stage('Run Unit Tests') {
         //     steps {
         //         sh '''#!/bin/bash
@@ -239,18 +226,6 @@ pipeline {
         //     }
         // }
      } // end stages
-=======
-        stage('Run Unit Tests') {
-            steps {
-                sh '''#!/bin/bash
-                set -e
-                source ${VENV}/bin/activate
-                pytest --junitxml=pytest.xml
-                '''
-            }
-        }
-      } // end stages
->>>>>>> 3a5d4ec04f545f6fba35e937730b0c3f3495e1be
 
 
     post {
