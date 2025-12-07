@@ -1,0 +1,9 @@
+# sqoop import --connect jdbc:postgresql://18.134.163.221:5432/testdb --username admin --password admin123 --table player_statistics  --m 1 --target-dir /tmp/DE011025/NBA/bronze/player_statistics
+
+# sqoop import --connect jdbc:postgresql://18.134.163.221:5432/testdb --username admin --password admin123 --table players  --m 1 --target-dir /tmp/DE011025/NBA/bronze/players
+
+# sqoop import --connect jdbc:postgresql://18.134.163.221:5432/testdb --username admin --password admin123 --table games  --m 1 --target-dir /tmp/DE011025/NBA/bronze/games
+
+# sqoop import --connect jdbc:postgresql://18.134.163.221:5432/testdb --username admin --password admin123 --table team_histories  --m 1 --target-dir /tmp/DE011025/NBA/bronze/team_histories
+
+# sqoop import --connect jdbc:postgresql://18.134.163.221:5432/testdb --username admin --password admin123 --table team_statistics  --m 1 --target-dir /tmp/DE011025/NBA/bronze/team_statistics
