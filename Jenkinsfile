@@ -65,21 +65,10 @@ pipeline {
     //             echo "  READ TIMESTAMP FROM HDFS  "
     //             echo "============================"
 
-<<<<<<< HEAD
     //             LAST_VALUE=$(hdfs dfs -cat /tmp/DE011025/NBA/bronze/player_statistics/part* \
     //                 | cut -d',' -f2 \
     //                 | sort \
     //                 | tail -n 1)
-=======
-                LAST_VALUE=$(
-                hdfs dfs -cat /tmp/DE011025/NBA/bronze/games/part* \
-                    | awk -F',' '{print $5}' \
-                    | grep -v '^$' \
-                    | sort \
-                    | tail -n 1
-                )
-
->>>>>>> 3a5d4ec04f545f6fba35e937730b0c3f3495e1be
 
     //             echo "LAST VALUE FROM BRONZE = ${LAST_VALUE}"
 
