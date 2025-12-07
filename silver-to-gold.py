@@ -522,7 +522,7 @@ def compute_gold_tables(df_stats, df_games):
     gold_dfs["hawks_player_summary_per_game_2024_gold"] = df_hawks_summary_per_game_2024
 
 
-        return gold_dfs
+    return gold_dfs
 
 
 # ----------------------------------------------------------------------
