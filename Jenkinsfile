@@ -65,10 +65,21 @@ pipeline {
     //             echo "  READ TIMESTAMP FROM HDFS  "
     //             echo "============================"
 
+<<<<<<< HEAD
     //             LAST_VALUE=$(hdfs dfs -cat /tmp/DE011025/NBA/bronze/player_statistics/part* \
     //                 | cut -d',' -f2 \
     //                 | sort \
     //                 | tail -n 1)
+=======
+                LAST_VALUE=$(
+                hdfs dfs -cat /tmp/DE011025/NBA/bronze/games/part* \
+                    | awk -F',' '{print $5}' \
+                    | grep -v '^$' \
+                    | sort \
+                    | tail -n 1
+                )
+
+>>>>>>> 3a5d4ec04f545f6fba35e937730b0c3f3495e1be
 
     //             echo "LAST VALUE FROM BRONZE = ${LAST_VALUE}"
 
@@ -198,6 +209,7 @@ pipeline {
             }
         }
 
+<<<<<<< HEAD
         // stage('Run Gold script') {
         //     steps {
         //         sh '''#!/bin/bash
@@ -207,6 +219,17 @@ pipeline {
         //         '''
         //     }
         // }
+=======
+        stage('Run Gold script') {
+            steps {
+                sh '''#!/bin/bash
+                set -e
+                echo "Running gold script..."
+                spark-submit silver-to-gold.py
+                '''
+            }
+        }
+>>>>>>> 3a5d4ec04f545f6fba35e937730b0c3f3495e1be
         //    stage('Run Fact and Dimensional tables') {
         //     steps {
         //         sh '''#!/bin/bash
@@ -216,6 +239,7 @@ pipeline {
         //         '''
         //     }
         // }
+<<<<<<< HEAD
         // stage('Run Unit Tests') {
         //     steps {
         //         sh '''#!/bin/bash
@@ -226,6 +250,18 @@ pipeline {
         //     }
         // }
      } // end stages
+=======
+        stage('Run Unit Tests') {
+            steps {
+                sh '''#!/bin/bash
+                set -e
+                source ${VENV}/bin/activate
+                pytest --junitxml=pytest.xml
+                '''
+            }
+        }
+      } // end stages
+>>>>>>> 3a5d4ec04f545f6fba35e937730b0c3f3495e1be
 
 
     post {
