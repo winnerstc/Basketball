@@ -441,7 +441,7 @@ def compute_gold_tables(df_stats, df_games):
             .groupBy("personId", "playerName")
             .agg(
                 F_sum("points").alias("total_points_2024"),
-                F_count("gameId").alias("games_played_2024")
+                F_count("gameid").alias("games_played_2024")
             )
             .filter(col("games_played_2024") > 0)
             .withColumn(
@@ -458,7 +458,7 @@ def compute_gold_tables(df_stats, df_games):
             .groupBy("personId", "playerName")
             .agg(
                 F_sum("assists").alias("total_assists_2024"),
-                F_count("gameId").alias("games_played_2024")
+                F_count("gameid").alias("games_played_2024")
             )
             .filter(col("games_played_2024") > 0)
             .withColumn(
@@ -472,10 +472,10 @@ def compute_gold_tables(df_stats, df_games):
     # 11) Hawks player blocks per game (2024)
     df_hawks_blocks_per_game_2024 = (
         df_hawks_2024
-            .groupBy("personId", "playerName")
+            .groupBy("personid", "playerName")
             .agg(
                 F_sum("blocks").alias("total_blocks_2024"),
-                F_count("gameId").alias("games_played_2024")
+                F_count("gameid").alias("games_played_2024")
             )
             .filter(col("games_played_2024") > 0)
             .withColumn(
@@ -492,7 +492,7 @@ def compute_gold_tables(df_stats, df_games):
             .groupBy("personId", "playerName")
             .agg(
                 F_sum("steals").alias("total_steals_2024"),
-                F_count("gameId").alias("games_played_2024")
+                F_count("gameid").alias("games_played_2024")
             )
             .filter(col("games_played_2024") > 0)
             .withColumn(
@@ -506,7 +506,7 @@ def compute_gold_tables(df_stats, df_games):
     # 13) Hawks combined per-game summary (2024)
     df_hawks_summary_per_game_2024 = (
         df_hawks_2024
-            .groupBy("personId", "playerName")
+            .groupBy("personid", "playerName")
             .agg(
                 F_sum("points").alias("total_points_2024"),
                 F_sum("assists").alias("total_assists_2024"),
