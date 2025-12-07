@@ -433,7 +433,7 @@ def compute_gold_tables(df_stats, df_games):
                 (col("playerteamName") == "Hawks")
             )
     )
-    df_hawks_2024.print()
+    df_hawks_2024.show()
 
     # 9) Hawks player points per game (2024)
     df_hawks_points_per_game_2024 = (
