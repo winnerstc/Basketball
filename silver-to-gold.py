@@ -430,7 +430,7 @@ def compute_gold_tables(df_stats, df_games):
         df_stats
             .filter(
                 (col("game_year") == 2024) &
-                (col("playerteamName") == "Hawks")
+                (col("playerteamname") == "Hawks")
             )
     )
     df_hawks_2024.show()
