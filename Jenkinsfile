@@ -133,7 +133,29 @@ pipeline {
                 '''
             }
         }
+<<<<<<< HEAD
       
+=======
+        stage('Cleanup All Silver Folders') {
+            steps {
+                sh '''
+                echo "===================================="
+                echo "   CLEANING OLD SILVER DIRECTORIES  "
+                echo "===================================="
+
+                hdfs dfs -rm -r /tmp/DE011025/NBA/silver/games || true
+                hdfs dfs -rm -r /tmp/DE011025/NBA/silver/players || true
+                hdfs dfs -rm -r /tmp/DE011025/NBA/silver/player_statistics || true
+                hdfs dfs -rm -r /tmp/DE011025/NBA/silver/team_histories || true
+                hdfs dfs -rm -r /tmp/DE011025/NBA/silver/team_statistics || true
+
+                echo "===================================="
+                echo "   CLEANUP COMPLETE — READY TO RUN  "
+                echo "===================================="
+                '''
+            }
+        }
+>>>>>>> 2d9e0cd6b492123c9b51eed83e67b229e5e7d42e
         stage('Setup Python Environment') {
             steps {
                 sh '''#!/bin/bash
@@ -148,45 +170,45 @@ pipeline {
             }
         }
 
-        // stage('Run Silver Players script') {
-        //     steps {
-        //         sh '''#!/bin/bash
-        //         set -e
-        //         echo "Running silver players script..."
-        //         spark-submit silver_players.py
-        //         '''
-        //     }
-        // }
+        stage('Run Silver Players script') {
+            steps {
+                sh '''#!/bin/bash
+                set -e
+                echo "Running silver players script..."
+                spark-submit silver_players.py
+                '''
+            }
+        }
 
-        // stage('Run Silver Games script') {
-        //     steps {
-        //         sh '''#!/bin/bash
-        //         set -e
-        //         echo "Running silver games script..."
-        //         spark-submit silver_games.py
-        //         '''
-        //     }
-        // }
+        stage('Run Silver Games script') {
+            steps {
+                sh '''#!/bin/bash
+                set -e
+                echo "Running silver games script..."
+                spark-submit silver_games.py
+                '''
+            }
+        }
 
-        // stage('Run Silver Player Stats script') {
-        //     steps {
-        //         sh '''#!/bin/bash
-        //         set -e
-        //         echo "Running silver player stats script..."
-        //         spark-submit silver_playerstats.py
-        //         '''
-        //     }
-        // }
+        stage('Run Silver Player Stats script') {
+            steps {
+                sh '''#!/bin/bash
+                set -e
+                echo "Running silver player stats script..."
+                spark-submit silver_playerstats.py
+                '''
+            }
+        }
 
-        // stage('Run Silver Team Histories script') {
-        //     steps {
-        //         sh '''#!/bin/bash
-        //         set -e
-        //         echo "Running silver team histories script..."
-        //         spark-submit silver_teamhistories.py
-        //         '''
-        //     }
-        // }
+        stage('Run Silver Team Histories script') {
+            steps {
+                sh '''#!/bin/bash
+                set -e
+                echo "Running silver team histories script..."
+                spark-submit silver_teamhistories.py
+                '''
+            }
+        }
 
         stage('Run Silver Team Statistics script') {
             steps {
@@ -225,7 +247,11 @@ pipeline {
                 '''
             }
         }
+<<<<<<< HEAD
      } end stages
+=======
+     } // end stages
+>>>>>>> 2d9e0cd6b492123c9b51eed83e67b229e5e7d42e
 
 
     post {
