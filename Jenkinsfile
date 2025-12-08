@@ -133,25 +133,25 @@ pipeline {
     //             '''
     //         }
     //     }
-        stage('Cleanup All Silver Folders') {
-            steps {
-                sh '''
-                echo "===================================="
-                echo "   CLEANING OLD SILVER DIRECTORIES  "
-                echo "===================================="
+        // stage('Cleanup All Silver Folders') {
+        //     steps {
+        //         sh '''
+        //         echo "===================================="
+        //         echo "   CLEANING OLD SILVER DIRECTORIES  "
+        //         echo "===================================="
 
-                hdfs dfs -rm -r /tmp/DE011025/NBA/silver/games || true
-                hdfs dfs -rm -r /tmp/DE011025/NBA/silver/players || true
-                hdfs dfs -rm -r /tmp/DE011025/NBA/silver/player_statistics || true
-                hdfs dfs -rm -r /tmp/DE011025/NBA/silver/team_histories || true
-                hdfs dfs -rm -r /tmp/DE011025/NBA/silver/team_statistics || true
+        //         hdfs dfs -rm -r /tmp/DE011025/NBA/silver/games || true
+        //         hdfs dfs -rm -r /tmp/DE011025/NBA/silver/players || true
+        //         hdfs dfs -rm -r /tmp/DE011025/NBA/silver/player_statistics || true
+        //         hdfs dfs -rm -r /tmp/DE011025/NBA/silver/team_histories || true
+        //         hdfs dfs -rm -r /tmp/DE011025/NBA/silver/team_statistics || true
 
-                echo "===================================="
-                echo "   CLEANUP COMPLETE — READY TO RUN  "
-                echo "===================================="
-                '''
-            }
-        }
+        //         echo "===================================="
+        //         echo "   CLEANUP COMPLETE — READY TO RUN  "
+        //         echo "===================================="
+        //         '''
+        //     }
+        // }
         stage('Setup Python Environment') {
             steps {
                 sh '''#!/bin/bash
