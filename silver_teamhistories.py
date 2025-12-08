@@ -335,10 +335,10 @@ def main(spark, source_db, source_table, silver_path, quarantine_path):
     
     # Run the transformation logic
     df_silver, df_bad = transform_team_histories(df)
-    df_silver.write.mode("overwrite").format("parquet").saveAsTable("team_histories_silver")
-    # df_silver.write \
-    #     .mode("overwrite") \
-    #     .parquet("hdfs:///tmp/DE011025/NBA/silver/team_histories")
+    # df_silver.write.mode("overwrite").format("parquet").saveAsTable("team_histories_silver")
+    df_silver.write \
+        .mode("overwrite") \
+        .parquet("hdfs:///tmp/DE011025/NBA/silver/team_histories")
     # #df_bad.write.mode("overwrite").parquet(quarantine_path)
     spark.stop()
     
