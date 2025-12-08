@@ -430,11 +430,12 @@ def compute_gold_tables(df_stats, df_games):
         df_stats
             .filter(
                 (col("game_year") == 2024) &
-                (col("playerteamname") == "Hawks")
+                (col("playerteamname") == "HAWKS")
             )
     )
     print("THIS IS TEST STRING")
     df_hawks_2024.show()
+    df_stats.columns
 
     # 9) Hawks player points per game (2024)
     df_hawks_points_per_game_2024 = (
