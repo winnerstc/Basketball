@@ -438,15 +438,15 @@ def compute_gold_tables(df_stats, df_games):
     # 9) Hawks player points per game (2024)
     df_hawks_points_per_game_2024 = (
         df_hawks_2024
-            .groupBy("personId", "playerName")
+            .groupBy("personid", "playerName")
             .agg(
-                F_sum("points").alias("total_points_2024"),
-                F_count("gameid").alias("games_played_2024")
+                F_sum("points").alias("points"),
+                F_count("gameid").alias("gameid")
             )
-            .filter(col("games_played_2024") > 0)
+            .filter(col("gameid") > 0)
             .withColumn(
                 "points_per_game_2024",
-                col("total_points_2024") / col("games_played_2024")
+                col("points") / col("gameid")
             )
     )
     gold_dfs["hawks_player_points_per_game_2024_gold"] = df_hawks_points_per_game_2024
