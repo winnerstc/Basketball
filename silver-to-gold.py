@@ -426,103 +426,103 @@ def compute_gold_tables(df_stats, df_games):
     # 5 Gold tables, all averages per game
     # --------------------------------------------------
 
-    df_hawks_2024 = (
-        df_stats
-            .filter(
-                (col("game_year") == 2024) &
-                (col("playerteamname") == "HAWKS")
-            )
-    )
-    print("THIS IS TEST STRING")
-    df_hawks_2024.show()
-    df_stats.columns
+    # df_hawks_2024 = (
+    #     df_stats
+    #         .filter(
+    #             (col("game_year") == 2024) &
+    #             (col("playerteamname") == "HAWKS")
+    #         )
+    # )
+    # print("THIS IS TEST STRING")
+    # df_hawks_2024.show()
+    # df_stats.columns
 
-    # 9) Hawks player points per game (2024)
-    df_hawks_points_per_game_2024 = (
-        df_hawks_2024
-            .groupBy("personid", "playerName")
-            .agg(
-                F_sum("points").alias("points"),
-                F_count("gameid").alias("gameid")
-            )
-            .filter(col("gameid") > 0)
-            .withColumn(
-                "points_per_game_2024",
-                col("points") / col("gameid")
-            )
-    )
-    gold_dfs["hawks_player_points_per_game_2024_gold"] = df_hawks_points_per_game_2024
-
-
-    # 10) Hawks player assists per game (2024)
-    df_hawks_assists_per_game_2024 = (
-        df_hawks_2024
-            .groupBy("personId", "playerName")
-            .agg(
-                F_sum("assists").alias("total_assists_2024"),
-                F_count("gameid").alias("games_played_2024")
-            )
-            .filter(col("games_played_2024") > 0)
-            .withColumn(
-                "assists_per_game_2024",
-                col("total_assists_2024") / col("games_played_2024")
-            )
-    )
-    gold_dfs["hawks_player_assists_per_game_2024_gold"] = df_hawks_assists_per_game_2024
+    # # 9) Hawks player points per game (2024)
+    # df_hawks_points_per_game_2024 = (
+    #     df_hawks_2024
+    #         .groupBy("personid", "playerName")
+    #         .agg(
+    #             F_sum("points").alias("points"),
+    #             F_count("gameid").alias("gameid")
+    #         )
+    #         .filter(col("gameid") > 0)
+    #         .withColumn(
+    #             "points_per_game_2024",
+    #             col("points") / col("gameid")
+    #         )
+    # )
+    # gold_dfs["hawks_player_points_per_game_2024_gold"] = df_hawks_points_per_game_2024
 
 
-    # 11) Hawks player blocks per game (2024)
-    df_hawks_blocks_per_game_2024 = (
-        df_hawks_2024
-            .groupBy("personid", "playerName")
-            .agg(
-                F_sum("blocks").alias("total_blocks_2024"),
-                F_count("gameid").alias("games_played_2024")
-            )
-            .filter(col("games_played_2024") > 0)
-            .withColumn(
-                "blocks_per_game_2024",
-                col("total_blocks_2024") / col("games_played_2024")
-            )
-    )
-    gold_dfs["hawks_player_blocks_per_game_2024_gold"] = df_hawks_blocks_per_game_2024
+    # # 10) Hawks player assists per game (2024)
+    # df_hawks_assists_per_game_2024 = (
+    #     df_hawks_2024
+    #         .groupBy("personId", "playerName")
+    #         .agg(
+    #             F_sum("assists").alias("total_assists_2024"),
+    #             F_count("gameid").alias("games_played_2024")
+    #         )
+    #         .filter(col("games_played_2024") > 0)
+    #         .withColumn(
+    #             "assists_per_game_2024",
+    #             col("total_assists_2024") / col("games_played_2024")
+    #         )
+    # )
+    # gold_dfs["hawks_player_assists_per_game_2024_gold"] = df_hawks_assists_per_game_2024
 
 
-    # 12) Hawks player steals per game (2024)
-    df_hawks_steals_per_game_2024 = (
-        df_hawks_2024
-            .groupBy("personId", "playerName")
-            .agg(
-                F_sum("steals").alias("total_steals_2024"),
-                F_count("gameid").alias("games_played_2024")
-            )
-            .filter(col("games_played_2024") > 0)
-            .withColumn(
-                "steals_per_game_2024",
-                col("total_steals_2024") / col("games_played_2024")
-            )
-    )
-    gold_dfs["hawks_player_steals_per_game_2024_gold"] = df_hawks_steals_per_game_2024
+    # # 11) Hawks player blocks per game (2024)
+    # df_hawks_blocks_per_game_2024 = (
+    #     df_hawks_2024
+    #         .groupBy("personid", "playerName")
+    #         .agg(
+    #             F_sum("blocks").alias("total_blocks_2024"),
+    #             F_count("gameid").alias("games_played_2024")
+    #         )
+    #         .filter(col("games_played_2024") > 0)
+    #         .withColumn(
+    #             "blocks_per_game_2024",
+    #             col("total_blocks_2024") / col("games_played_2024")
+    #         )
+    # )
+    # gold_dfs["hawks_player_blocks_per_game_2024_gold"] = df_hawks_blocks_per_game_2024
 
 
-    # 13) Hawks combined per-game summary (2024)
-    df_hawks_summary_per_game_2024 = (
-        df_hawks_2024
-            .groupBy("personid", "playerName")
-            .agg(
-                F_sum("points").alias("total_points_2024"),
-                F_sum("assists").alias("total_assists_2024"),
-                F_sum("blocks").alias("total_blocks_2024"),
-                F_sum("steals").alias("total_steals_2024"),
-                F_count("gameId").alias("games_played_2024")
-            )
-            .filter(col("games_played_2024") > 0)
-            .withColumn("points_per_game_2024", col("total_points_2024") / col("games_played_2024")) \
-            .withColumn("assists_per_game_2024", col("total_assists_2024") / col("games_played_2024")) \
-            .withColumn("blocks_per_game_2024", col("total_blocks_2024") / col("games_played_2024")) \
-            .withColumn("steals_per_game_2024", col("total_steals_2024") / col("games_played_2024"))
-    )
-    gold_dfs["hawks_player_summary_per_game_2024_gold"] = df_hawks_summary_per_game_2024
+    # # 12) Hawks player steals per game (2024)
+    # df_hawks_steals_per_game_2024 = (
+    #     df_hawks_2024
+    #         .groupBy("personId", "playerName")
+    #         .agg(
+    #             F_sum("steals").alias("total_steals_2024"),
+    #             F_count("gameid").alias("games_played_2024")
+    #         )
+    #         .filter(col("games_played_2024") > 0)
+    #         .withColumn(
+    #             "steals_per_game_2024",
+    #             col("total_steals_2024") / col("games_played_2024")
+    #         )
+    # )
+    # gold_dfs["hawks_player_steals_per_game_2024_gold"] = df_hawks_steals_per_game_2024
+
+
+    # # 13) Hawks combined per-game summary (2024)
+    # df_hawks_summary_per_game_2024 = (
+    #     df_hawks_2024
+    #         .groupBy("personid", "playerName")
+    #         .agg(
+    #             F_sum("points").alias("total_points_2024"),
+    #             F_sum("assists").alias("total_assists_2024"),
+    #             F_sum("blocks").alias("total_blocks_2024"),
+    #             F_sum("steals").alias("total_steals_2024"),
+    #             F_count("gameId").alias("games_played_2024")
+    #         )
+    #         .filter(col("games_played_2024") > 0)
+    #         .withColumn("points_per_game_2024", col("total_points_2024") / col("games_played_2024")) \
+    #         .withColumn("assists_per_game_2024", col("total_assists_2024") / col("games_played_2024")) \
+    #         .withColumn("blocks_per_game_2024", col("total_blocks_2024") / col("games_played_2024")) \
+    #         .withColumn("steals_per_game_2024", col("total_steals_2024") / col("games_played_2024"))
+    # )
+    # gold_dfs["hawks_player_summary_per_game_2024_gold"] = df_hawks_summary_per_game_2024
 
 
     return gold_dfs
