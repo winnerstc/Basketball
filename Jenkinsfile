@@ -10,12 +10,12 @@ pipeline {
         VENV = 'unit_testing_bd'
     }
 
-    // stages {
-    //     stage('Checkout') {
-    //         steps {
-    //             checkout scm
-    //         }
-    //     }
+    stages {
+        stage('Checkout') {
+            steps {
+                checkout scm
+            }
+        }
 
     //     stage('Sqoop Incremental Using HDFS for GAMES') {
     //         steps {
@@ -225,7 +225,7 @@ pipeline {
         //         '''
         //     }
         // }
-     //} // end stages
+     } // end stages
 
 
     post {
