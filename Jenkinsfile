@@ -216,15 +216,15 @@ pipeline {
             }
         }
 
-        // stage('Run Gold script') {
-        //     steps {
-        //         sh '''#!/bin/bash
-        //         set -e
-        //         echo "Running gold script..."
-        //         spark-submit silver-to-gold.py
-        //         '''
-        //     }
-        // }
+        stage('Run Gold script') {
+            steps {
+                sh '''#!/bin/bash
+                set -e
+                echo "Running gold script..."
+                spark-submit silver-to-gold.py
+                '''
+            }
+        }
         //    stage('Run Fact and Dimensional tables') {
         //     steps {
         //         sh '''#!/bin/bash
